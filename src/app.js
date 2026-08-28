@@ -156,9 +156,9 @@
         renderCurrent();
     }
 
-    // Every river hex back to land. Unlike "New empty map" this ignores the
+    // Every water hex back to land. Unlike "New empty map" this ignores the
     // width/height inputs, so a size typed but not applied stays unapplied.
-    function resetRivers() {
+    function resetWater() {
         state.rivers.clear();
         enterEditMode();
         renderCurrent();
@@ -329,7 +329,7 @@
 
         $('algorithm').onchange = (event) => selectAlgorithm(event.target.value);
 
-        $('resetWater').onclick = resetRivers;
+        $('resetWater').onclick = resetWater;
 
         $('randomWater').onclick = () => {
             readDimensions();
