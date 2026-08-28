@@ -102,7 +102,7 @@
         $('statForm').textContent = state.form;
         $('statTotal').textContent = total;
         $('statLand').textContent = total - state.rivers.size;
-        $('statRiver').textContent = state.rivers.size;
+        $('statWater').textContent = state.rivers.size;
         $('landSwatch').style.background = LAND_COLOR;
     }
 
@@ -114,8 +114,8 @@
         // The BGA format only exists once colors are generated.
         $('copyBga').disabled = !colored;
         // Layout editing is only meaningful in edit mode.
-        $('randomRivers').disabled = colored;
-        $('resetRivers').disabled = colored;
+        $('randomWater').disabled = colored;
+        $('resetWater').disabled = colored;
         // Keep the primary action self-describing.
         $('generateColors').textContent = colored ? 'Regenerate colors' : 'Generate colors';
         $('exportHint').textContent = colored
@@ -156,9 +156,9 @@
         renderCurrent();
     }
 
-    // Every river hex back to land. Unlike "New empty map" this ignores the
+    // Every water hex back to land. Unlike "New empty map" this ignores the
     // width/height inputs, so a size typed but not applied stays unapplied.
-    function resetRivers() {
+    function resetWater() {
         state.rivers.clear();
         enterEditMode();
         renderCurrent();
@@ -329,9 +329,9 @@
 
         $('algorithm').onchange = (event) => selectAlgorithm(event.target.value);
 
-        $('resetRivers').onclick = resetRivers;
+        $('resetWater').onclick = resetWater;
 
-        $('randomRivers').onclick = () => {
+        $('randomWater').onclick = () => {
             readDimensions();
             applyLayout(TM.layout.randomizeRivers(state.width, state.height, state.form));
         };

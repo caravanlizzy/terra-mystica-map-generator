@@ -1,33 +1,46 @@
 /*
- * Terrain color model. A cell value is a terrain color, WATER, or one of the
- * markers used while building (RIVER / UNASSIGNED).
+ * Terrain color model. A cell value is a number:
+ *   0  = water
+ *   1  = black
+ *   2  = blue
+ *   3  = green
+ *   4  = grey
+ *   5  = red
+ *   6  = yellow
+ *   7  = brown
+ *  -1  = UNASSIGNED (land hex without a color yet, used while building)
  */
 (function (TM) {
     'use strict';
 
-    // The seven terrain colors, in wheel order.
-    const TERRAINS = ['red', 'yel', 'bro', 'bla', 'blu', 'grn', 'gry'];
+    // The seven terrain values, in numeric order (1–7).
+    const TERRAINS = [1, 2, 3, 4, 5, 6, 7];
 
-    const WATER = '~~~';        // finished water hex
-    const RIVER = ' ~ ';        // river hex, not finished yet
-    const UNASSIGNED = '???';   // land hex without a color yet
+    const WATER = 0;        // water hex
+    const UNASSIGNED = -1;  // land hex without a color yet
 
     // Fill colors for the renderer and the SVG/PNG exports.
     const DISPLAY_COLORS = {
-        red: '#e2373a',
-        yel: '#f2e33f',
-        bro: '#835C3B',
-        bla: '#2b2b2b',
-        blu: '#3a6ff2',
-        grn: '#4aa03f',
-        gry: '#808080',
-        [WATER]: '#ffffff'
+        1: '#2b2b2b',   // black
+        2: '#3a6ff2',   // blue
+        3: '#4aa03f',   // green
+        4: '#808080',   // grey
+        5: '#e2373a',   // red
+        6: '#f2e33f',   // yellow
+        7: '#835C3B',   // brown
+        0: '#ffffff'    // water
     };
 
     // Board Game Arena map-file symbols.
     const BGA_SYMBOLS = {
-        red: 'R', yel: 'Y', bro: 'U', bla: 'K',
-        blu: 'B', grn: 'G', gry: 'S', [WATER]: 'I'
+        1: 'K', // black
+        2: 'B', // blue
+        3: 'G', // green
+        4: 'S', // grey
+        5: 'R', // red
+        6: 'Y', // yellow
+        7: 'U', // brown
+        0: 'I'  // water
     };
 
     function isTerrain(value) {
@@ -35,7 +48,7 @@
     }
 
     function isWater(value) {
-        return value === WATER || value === RIVER;
+        return value === WATER;
     }
 
     function displayColor(value) {
@@ -47,7 +60,7 @@
     }
 
     TM.colors = {
-        TERRAINS, WATER, RIVER, UNASSIGNED,
+        TERRAINS, WATER, UNASSIGNED,
         DISPLAY_COLORS, BGA_SYMBOLS,
         isTerrain, isWater, displayColor, bgaSymbol
     };
