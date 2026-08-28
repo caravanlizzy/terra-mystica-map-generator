@@ -185,12 +185,14 @@
         };
     }
 
+    function getSelectedAlgorithm() {
+        return TM.algorithms.find(a => a.id === state.algorithmId) || TM.algorithms[0];
+    }
+
     function generateColors() {
         readDimensions();
         const grid = new TM.MapGrid(currentLayout());
-        const generator = new TM.MapGenerator(grid, { algorithm: state.algorithmId });
-
-        generator.generate();
+        grid.generate(getSelectedAlgorithm());
         state.grid = grid;
         state.selected = [];
         state.mode = 'colored';
@@ -277,36 +279,32 @@
         });
     }
 
-    // Built from the registry, so registering an algorithm is enough to make it
-    // selectable here (see algorithms/registry.js).
     function fillAlgorithmDropdown() {
         const select = $('algorithm');
-        const algorithms = TM.algorithms.list();
-        algorithms.forEach(algorithm => {
+        TM.algorithms.forEach(algorithm => {
             const option = document.createElement('option');
             option.value = algorithm.id;
             option.textContent = algorithm.label;
             option.title = algorithm.description;
             select.appendChild(option);
         });
-        const initial = TM.algorithms.defaultAlgorithm();
-        state.algorithmId = initial ? initial.id : null;
+        state.algorithmId = TM.algorithms.length ? TM.algorithms[0].id : null;
         select.value = state.algorithmId || '';
         // Nothing to choose with one algorithm, but keep it visible.
-        select.disabled = algorithms.length < 2;
+        select.disabled = TM.algorithms.length < 2;
         describeSelectedAlgorithm();
     }
 
-    // The selected algorithm's description becomes the dropdown tooltip.
     function describeSelectedAlgorithm() {
-        const algorithm = TM.algorithms.get(state.algorithmId);
+        const algorithm = getSelectedAlgorithm();
         $('algorithm').title = algorithm && algorithm.description
             ? algorithm.description
             : 'Which algorithm distributes the terrain colors over the land hexes.';
     }
 
     function selectAlgorithm(id) {
-        state.algorithmId = TM.algorithms.has(id) ? id : state.algorithmId;
+        const found = TM.algorithms.find(a => a.id === id);
+        if (found) state.algorithmId = id;
         $('algorithm').value = state.algorithmId || '';
         describeSelectedAlgorithm();
         // Switching on a colored map re-runs it, so the effect is visible at once.

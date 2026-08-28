@@ -1,7 +1,6 @@
 /*
  * MapGrid - the board every algorithm works on: cell values (see colors.js),
- * shape, neighborhood queries and the export formats. No generation logic;
- * algorithms live in src/services/algorithms/.
+ * shape, neighborhood queries and the export formats.
  */
 (function (TM) {
     'use strict';
@@ -112,6 +111,14 @@
             return this.toGrid()
                 .map(row => row.map(bgaSymbol).join(','))
                 .join('\n');
+        }
+
+        // Fill the grid with a terrain algorithm, then finish the water hexes.
+        generate(algorithm) {
+            this.reset();
+            algorithm.fill(this);
+            this.finishWater();
+            return this;
         }
     }
 
