@@ -19,7 +19,7 @@
  *
  * ── Color values ────────────────────────────────────────────────────────────
  *
- *   TM.colors.TERRAINS   [1, 2, 3, 4, 5, 6, 7]  (black, blue, brown, green, grey, red, yellow)
+ *   TM.colors.TERRAINS   [1, 2, 3, 4, 5, 6, 7]  (black, blue, green, grey, red, yellow, brown)
  *   TM.colors.UNASSIGNED -1     land hex not yet assigned
  *   TM.colors.WATER       0     finished water hex (read-only inside fill)
  *
