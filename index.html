@@ -92,18 +92,13 @@
     </section>
 </main>
 
-<!-- Services (no external dependencies), loaded in dependency order -->
-<script src="src/services/colors.js"></script>
-<script src="src/services/hexGeometry.js"></script>
-<script src="src/services/random.js"></script>
-<script src="src/services/mapGrid.js"></script>
-<script src="src/services/layoutGenerator.js"></script>
-<!-- Map algorithms: add a new file here to make it available -->
-<script src="src/services/algorithms/registry.js"></script>
-<script src="src/services/algorithms/randomColors.js"></script>
-<script src="src/services/mapGenerator.js"></script>
-<!-- UI -->
-<script src="src/ui/mapRenderer.js"></script>
-<script src="src/ui/app.js"></script>
+<!-- Loaded in dependency order -->
+<script src="src/geometry.js"></script>
+<script src="src/colors.js"></script>
+<script src="src/grid.js"></script>
+<script src="src/layouts.js"></script>
+<script src="src/algorithms.js"></script>
+<script src="src/renderer.js"></script>
+<script src="src/app.js"></script>
 </body>
 </html>

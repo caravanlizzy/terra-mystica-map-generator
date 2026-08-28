@@ -6,7 +6,11 @@
     'use strict';
 
     const { rowWidth, outOfBounds, nextHex } = TM.geometry;
-    const { randomInt } = TM.random;
+
+    // Simple random helpers used only within this module.
+    function randomInt(min, max) {
+        return min + Math.floor(Math.random() * (max - min + 1));
+    }
 
     const PRESETS = {
         original: {
