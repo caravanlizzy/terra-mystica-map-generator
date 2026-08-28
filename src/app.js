@@ -1,14 +1,14 @@
 /*
  * Application controller: wires the DOM controls to the services and renderer.
  *
- * Two modes: 'edit' draws the river layout (a click toggles land / river),
+ * Two modes: 'edit' draws the water layout (a click toggles land / water),
  * 'colored' shows the generated terrains (click two land hexes to swap them).
  */
 (function (TM) {
     'use strict';
 
     const { WATER } = TM.terrain;
-    const { displayColor, LAND_COLOR, RIVER_COLOR } = TM.colors;
+    const { displayColor, LAND_COLOR, WATER_COLOR } = TM.colors;
 
     const svg = document.getElementById('map');
     const $ = (id) => document.getElementById(id);
@@ -17,7 +17,7 @@
         width: 13,
         height: 9,
         form: 0,
-        rivers: new Set(),   // "x,y" of river hexes (edit mode)
+        water: new Set(),    // "x,y" of water hexes (edit mode)
         mode: 'edit',        // 'edit' | 'colored'
         grid: null,          // TM.MapGrid instance (colored mode)
         selected: [],        // [[x, y], ...] land hexes picked for a swap
@@ -29,13 +29,13 @@
     /* ---------- rendering ---------- */
 
     function editCell(x, y) {
-        const river = state.rivers.has(key(x, y));
+        const isWater = state.water.has(key(x, y));
         return {
-            fill: river ? RIVER_COLOR : LAND_COLOR,
-            stroke: river ? '#0b3c5d' : '#222',
+            fill: isWater ? WATER_COLOR : LAND_COLOR,
+            stroke: isWater ? '#0b3c5d' : '#222',
             strokeWidth: 1,
             label: x + ',' + y,
-            labelColor: river ? '#fff' : '#222'
+            labelColor: isWater ? '#fff' : '#222'
         };
     }
 
@@ -48,8 +48,8 @@
 
     function onEditClick(x, y) {
         const k = key(x, y);
-        if (state.rivers.has(k)) state.rivers.delete(k);
-        else state.rivers.add(k);
+        if (state.water.has(k)) state.water.delete(k);
+        else state.water.add(k);
         renderCurrent();
     }
 
@@ -99,8 +99,8 @@
         $('statH').textContent = state.height;
         $('statForm').textContent = state.form;
         $('statTotal').textContent = total;
-        $('statLand').textContent = total - state.rivers.size;
-        $('statWater').textContent = state.rivers.size;
+        $('statLand').textContent = total - state.water.size;
+        $('statWater').textContent = state.water.size;
         $('landSwatch').style.background = LAND_COLOR;
     }
 
@@ -149,7 +149,7 @@
 
     function newEmptyMap() {
         readDimensions();
-        state.rivers.clear();
+        state.water.clear();
         enterEditMode();
         renderCurrent();
     }
@@ -157,7 +157,7 @@
     // Every water hex back to land. Unlike "New empty map" this ignores the
     // width/height inputs, so a size typed but not applied stays unapplied.
     function resetWater() {
-        state.rivers.clear();
+        state.water.clear();
         enterEditMode();
         renderCurrent();
     }
@@ -166,7 +166,7 @@
         state.width = layout.width;
         state.height = layout.height;
         state.form = layout.form;
-        state.rivers = new Set(layout.rivers.map(([x, y]) => key(x, y)));
+        state.water = new Set(layout.water.map(([x, y]) => key(x, y)));
         enterEditMode();
         $('width').value = state.width;
         $('height').value = state.height;
@@ -179,7 +179,7 @@
             width: state.width,
             height: state.height,
             form: state.form,
-            rivers: [...state.rivers].map(k => k.split(',').map(Number))
+            water: [...state.water].map(k => k.split(',').map(Number))
         };
     }
 
@@ -247,7 +247,7 @@
             width: state.width,
             height: state.height,
             form: state.form,
-            rivers: state.rivers,
+            water: state.water,
             mode: state.mode,
             grid: state.grid,
             algorithmId: state.algorithmId
@@ -327,7 +327,7 @@
 
         $('randomWater').onclick = () => {
             readDimensions();
-            applyLayout(TM.layout.randomizeRivers(state.width, state.height, state.form));
+            applyLayout(TM.layout.randomizeWater(state.width, state.height, state.form));
         };
 
         $('exportSvg').onclick = () => download('terra-mystica-map.svg', exportedSvg(), 'image/svg+xml');
@@ -353,3 +353,4 @@
         init();
     }
 })(window.TM = window.TM || {});
+

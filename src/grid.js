@@ -1,5 +1,5 @@
 /*
- * MapGrid - the board every algorithm works on: cell values (see colors.js),
+ * MapGrid - the board every algorithm works on: cell values (see terrain.js),
  * shape, neighborhood queries and the export formats.
  */
 (function (TM) {
@@ -9,13 +9,13 @@
     const { rowWidth, outOfBounds, nextHex } = TM.hexGrid;
 
     class MapGrid {
-        // layout: { width, height, form, rivers? }, rivers being [x, y] pairs
+        // layout: { width, height, form, water? }, water being [x, y] pairs
         // or "x,y" strings.
         constructor(layout) {
             this.width = layout.width;
             this.height = layout.height;
             this.form = layout.form;
-            this.rivers = new Set((layout.rivers || [])
+            this.water = new Set((layout.water || [])
                 .map(r => (Array.isArray(r) ? MapGrid.key(r[0], r[1]) : String(r))));
             this.cells = {}; // "x,y" -> cell value
             this.reset();
@@ -48,11 +48,11 @@
         // Value at (x, y), or '' when off the board.
         at(x, y) { return this.outOfBounds(x, y) ? '' : this.get(x, y); }
 
-        // All hexes start UNASSIGNED; water hexes start as WATER directly.
+        // All hexes start UNASSIGNED; water hexes are initialised as WATER.
         reset() {
             this.cells = {};
             this.forEachCoordinate((x, y) => {
-                this.set(x, y, this.rivers.has(MapGrid.key(x, y)) ? WATER : UNASSIGNED);
+                this.set(x, y, this.water.has(MapGrid.key(x, y)) ? WATER : UNASSIGNED);
             });
         }
 
@@ -117,3 +117,4 @@
     TM.MapGrid = MapGrid;
     TM.totalHexes = totalHexes;
 })(window.TM = window.TM || {});
+

@@ -79,7 +79,7 @@
             line.setAttribute('stroke', e.color);
             line.setAttribute('stroke-width', e.width);
             line.setAttribute('stroke-linecap', 'round');
-            line.setAttribute('class', 'river-border');
+            line.setAttribute('class', 'water-border');
             svg.appendChild(line);
         });
 
