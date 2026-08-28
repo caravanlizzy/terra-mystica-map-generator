@@ -5,7 +5,7 @@
 (function (TM) {
     'use strict';
 
-    const { WATER, UNASSIGNED, isWater, bgaSymbol } = TM.colors;
+    const { WATER, UNASSIGNED, isWater } = TM.terrain;
     const { rowWidth, outOfBounds, nextHex } = TM.geometry;
 
     class MapGrid {
@@ -97,13 +97,6 @@
                 rows.push(row);
             }
             return rows;
-        }
-
-        // Board Game Arena map-file format.
-        bgaFormat() {
-            return this.toGrid()
-                .map(row => row.map(bgaSymbol).join(','))
-                .join('\n');
         }
 
         // Fill the grid with a terrain algorithm.
