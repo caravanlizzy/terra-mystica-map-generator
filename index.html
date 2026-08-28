@@ -36,8 +36,8 @@
     <aside>
         <h2>Map editor</h2>
         <p class="hint" id="editHint">
-            Click a hex to toggle it between <b>land</b> and <b>river</b>.
-            River hexes are shown blue. Pick a preset or randomize a layout, then
+            Click a hex to toggle it between <b>land</b> and <b>water</b>.
+            Water hexes are shown blue. Pick a preset or randomize a layout, then
             press <b>Generate colors</b> to distribute the seven terrain colors.
         </p>
         <p class="hint" id="swapHint" style="display:none">
@@ -47,7 +47,7 @@
 
         <div class="legend">
             <div class="swatch"><i id="landSwatch" style="background:#faedbf"></i> Land</div>
-            <div class="swatch"><i style="background:#4aa9e8"></i> River (editing)</div>
+            <div class="swatch"><i style="background:#4aa9e8"></i> Water (editing)</div>
             <div class="swatch"><i style="background:#ffffff"></i> Water (generated)</div>
         </div>
 
@@ -56,13 +56,13 @@
         <div class="stat"><span>Form</span><b id="statForm">0</b></div>
         <div class="stat"><span>Total hexes</span><b id="statTotal">117</b></div>
         <div class="stat"><span>Land hexes</span><b id="statLand">117</b></div>
-        <div class="stat"><span>River hexes</span><b id="statRiver">0</b></div>
+        <div class="stat"><span>Water hexes</span><b id="statWater">0</b></div>
 
         <div id="swapStatus"></div>
 
         <div class="actions">
-            <button id="randomRivers">Random rivers</button>
-            <button id="resetRivers" title="Turn every river hex back into land, keeping the current size and form.">Reset rivers</button>
+            <button id="randomWater">Random water</button>
+            <button id="resetWater" title="Turn every water hex back into land, keeping the current size and form.">Reset water</button>
         </div>
 
         <div class="export" id="exportSection">

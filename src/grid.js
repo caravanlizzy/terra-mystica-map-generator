@@ -5,7 +5,7 @@
 (function (TM) {
     'use strict';
 
-    const { WATER, RIVER, UNASSIGNED, isWater, bgaSymbol } = TM.colors;
+    const { WATER, UNASSIGNED, isWater, bgaSymbol } = TM.colors;
     const { rowWidth, outOfBounds, nextHex } = TM.geometry;
 
     class MapGrid {
@@ -48,11 +48,11 @@
         // Value at (x, y), or '' when off the board.
         at(x, y) { return this.outOfBounds(x, y) ? '' : this.get(x, y); }
 
-        // River hexes back to RIVER, everything else UNASSIGNED.
+        // All hexes start UNASSIGNED; water hexes start as WATER directly.
         reset() {
             this.cells = {};
             this.forEachCoordinate((x, y) => {
-                this.set(x, y, this.rivers.has(MapGrid.key(x, y)) ? RIVER : UNASSIGNED);
+                this.set(x, y, this.rivers.has(MapGrid.key(x, y)) ? WATER : UNASSIGNED);
             });
         }
 
@@ -70,13 +70,6 @@
                 if (!isWater(this.get(x, y))) result.push([x, y]);
             });
             return result;
-        }
-
-        // Every remaining RIVER marker becomes a finished WATER hex.
-        finishWater() {
-            for (const key in this.cells) {
-                if (this.cells[key] === RIVER) this.cells[key] = WATER;
-            }
         }
 
         // Hexes currently carrying `value`.
@@ -113,11 +106,10 @@
                 .join('\n');
         }
 
-        // Fill the grid with a terrain algorithm, then finish the water hexes.
+        // Fill the grid with a terrain algorithm.
         generate(algorithm) {
             this.reset();
             algorithm.fill(this);
-            this.finishWater();
             return this;
         }
     }
