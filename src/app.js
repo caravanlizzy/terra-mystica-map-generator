@@ -7,13 +7,11 @@
 (function (TM) {
     'use strict';
 
-    const { WATER, displayColor } = TM.colors;
+    const { WATER } = TM.terrain;
+    const { displayColor, LAND_COLOR, RIVER_COLOR } = TM.colors;
 
     const svg = document.getElementById('map');
     const $ = (id) => document.getElementById(id);
-
-    const LAND_COLOR = '#faedbf';   // land, in edit mode
-    const RIVER_COLOR = '#4aa9e8';  // river, in edit mode
 
     const state = {
         width: 13,
@@ -245,19 +243,15 @@
     }
 
     function mapData() {
-        const layout = currentLayout();
-        const data = {
-            width: layout.width,
-            height: layout.height,
-            form: layout.form,
-            riverCoordinates: layout.rivers
-        };
-        if (state.mode === 'colored' && state.grid) {
-            data.colors = state.grid.toGrid();
-            data.bga = state.grid.bgaFormat();
-            data.algorithm = state.algorithmId;
-        }
-        return data;
+        return TM.export.toJson({
+            width: state.width,
+            height: state.height,
+            form: state.form,
+            rivers: state.rivers,
+            mode: state.mode,
+            grid: state.grid,
+            algorithmId: state.algorithmId
+        });
     }
 
     function feedback(button, text) {
@@ -345,7 +339,7 @@
         };
         $('copyBga').onclick = async () => {
             if (state.mode !== 'colored' || !state.grid) return;
-            await navigator.clipboard.writeText(state.grid.bgaFormat());
+            await navigator.clipboard.writeText(TM.export.bgaFormat(state.grid));
             feedback($('copyBga'), 'Copied!');
         };
 
