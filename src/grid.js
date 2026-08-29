@@ -6,7 +6,7 @@
     'use strict';
 
     const { WATER, UNASSIGNED, isWater } = TM.terrain;
-    const { rowWidth, outOfBounds, nextHex } = TM.geometry;
+    const { rowWidth, outOfBounds, nextHex } = TM.hexGrid;
 
     class MapGrid {
         // layout: { width, height, form, rivers? }, rivers being [x, y] pairs
