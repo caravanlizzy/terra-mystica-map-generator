@@ -10,7 +10,8 @@
     'use strict';
 
     const NS = 'http://www.w3.org/2000/svg';
-    const { center, hexPoints, hexVertices, canvasSize, rowWidth } = TM.geometry;
+    const { center, hexPoints, hexVertices, canvasSize } = TM.geometry;
+    const { rowWidth } = TM.hexGrid;
 
     function render(svg, opts) {
         const { width, height, form, cellFor, onClick, defs } = opts;
