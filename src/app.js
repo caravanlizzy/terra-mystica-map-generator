@@ -8,7 +8,7 @@
     'use strict';
 
     const { WATER } = TM.terrain;
-    const { displayColor, LAND_COLOR, WATER_COLOR } = TM.colors;
+    const { displayColor } = TM.colors;
 
     const svg = document.getElementById('map');
     const $ = (id) => document.getElementById(id);
@@ -28,21 +28,44 @@
 
     /* ---------- rendering ---------- */
 
+    function isSingleWater(x, y) {
+        if (state.mode === 'colored' && state.grid) {
+            if (!state.grid.isWaterAt(x, y)) return false;
+            const neighbors = state.grid.neighbors(x, y);
+            return !neighbors.some(([nx, ny]) => state.grid.isWaterAt(nx, ny));
+        } else {
+            if (!state.water.has(key(x, y))) return false;
+            for (let dir = 0; dir < 6; dir++) {
+                const [nx, ny] = TM.hexGrid.nextHex(x, y, dir, state.form);
+                if (!TM.hexGrid.outOfBounds(nx, ny, state.width, state.height, state.form)) {
+                    if (state.water.has(key(nx, ny))) return false;
+                }
+            }
+            return true;
+        }
+    }
+
     function editCell(x, y) {
         const isWater = state.water.has(key(x, y));
         return {
-            fill: isWater ? WATER_COLOR : LAND_COLOR,
-            stroke: isWater ? '#0b3c5d' : '#222',
-            strokeWidth: 1,
-            label: x + ',' + y,
-            labelColor: isWater ? '#fff' : '#222'
+            fill: '#ffffff',
+            stroke: '#222',
+            strokeWidth: 2,
+            isWater,
+            marker: isSingleWater(x, y) ? 'water' : null
         };
     }
 
     function coloredCell(x, y) {
+        const value = state.grid.get(x, y);
+        const isWater = value === WATER;
         return {
-            fill: displayColor(state.grid.get(x, y)),
-            selected: state.selected.some(([sx, sy]) => sx === x && sy === y)
+            fill: displayColor(value),
+            stroke: '#333',
+            strokeWidth: 2,
+            isWater,
+            selected: state.selected.some(([sx, sy]) => sx === x && sy === y),
+            marker: isSingleWater(x, y) ? 'water' : null
         };
     }
 
@@ -101,7 +124,6 @@
         $('statTotal').textContent = total;
         $('statLand').textContent = total - state.water.size;
         $('statWater').textContent = state.water.size;
-        $('landSwatch').style.background = LAND_COLOR;
     }
 
     function updateModeUi() {
@@ -216,10 +238,7 @@
     function exportedSvg() {
         const clone = svg.cloneNode(true);
         clone.querySelectorAll('.label').forEach(e => (e.textContent = ''));
-        clone.querySelectorAll('.hex').forEach(e => {
-            e.setAttribute('stroke', '#333');
-            e.setAttribute('stroke-width', '1');
-        });
+        clone.querySelectorAll('.selected-hex').forEach(e => e.remove());
         clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
         return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone);
     }

@@ -31,10 +31,6 @@
         0: 'I'  // water
     };
 
-    // Edit-mode hex fill colors (used by the app controller).
-    const LAND_COLOR  = '#faedbf';
-    const WATER_COLOR = '#4aa9e8';
-
     function displayColor(value) {
         return DISPLAY_COLORS[value] || '#cccccc';
     }
@@ -45,7 +41,6 @@
 
     TM.colors = {
         DISPLAY_COLORS, BGA_SYMBOLS,
-        LAND_COLOR, WATER_COLOR,
         displayColor, bgaSymbol
     };
 })(window.TM = window.TM || {});
