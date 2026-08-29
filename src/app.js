@@ -188,7 +188,9 @@
         state.width = layout.width;
         state.height = layout.height;
         state.form = layout.form;
-        state.water = new Set(layout.water.map(([x, y]) => key(x, y)));
+        state.water = layout.water instanceof Set
+            ? new Set(layout.water)
+            : new Set((layout.water || []).map(item => Array.isArray(item) ? key(item[0], item[1]) : String(item)));
         enterEditMode();
         $('width').value = state.width;
         $('height').value = state.height;
@@ -346,7 +348,8 @@
 
         $('randomWater').onclick = () => {
             readDimensions();
-            applyLayout(TM.layout.randomizeWater(state.width, state.height, state.form));
+            const grid = new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
+            applyLayout(TM.layout.randomizeWater(grid));
         };
 
         $('exportSvg').onclick = () => download('terra-mystica-map.svg', exportedSvg(), 'image/svg+xml');
