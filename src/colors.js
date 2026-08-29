@@ -2,7 +2,7 @@
  * UI color and symbol mapping. Depends on terrain.js for the domain constants.
  *
  * Provides display colors for the SVG renderer, BGA export symbols, and the
- * edit-mode land / river fill colors used by the application controller.
+ * edit-mode land / water fill colors used by the application controller.
  */
 (function (TM) {
     'use strict';
@@ -33,7 +33,7 @@
 
     // Edit-mode hex fill colors (used by the app controller).
     const LAND_COLOR  = '#faedbf';
-    const RIVER_COLOR = '#4aa9e8';
+    const WATER_COLOR = '#4aa9e8';
 
     function displayColor(value) {
         return DISPLAY_COLORS[value] || '#cccccc';
@@ -45,7 +45,8 @@
 
     TM.colors = {
         DISPLAY_COLORS, BGA_SYMBOLS,
-        LAND_COLOR, RIVER_COLOR,
+        LAND_COLOR, WATER_COLOR,
         displayColor, bgaSymbol
     };
 })(window.TM = window.TM || {});
+

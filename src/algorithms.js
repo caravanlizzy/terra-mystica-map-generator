@@ -13,7 +13,7 @@
  *   grid.neighbors(x, y)          → [[x, y], …]   in-bounds neighbors (up to 6)
  *   grid.get(x, y)                → value          current cell value
  *   grid.set(x, y, value)                          assign a terrain color
- *   grid.isWaterAt(x, y)          → bool           true for water / river hexes
+ *   grid.isWaterAt(x, y)          → bool           true for water hexes
  *   grid.count(value)             → number         how many cells hold value
  *   grid.snapshot() / restore(s)                   save & reload all cells
  *

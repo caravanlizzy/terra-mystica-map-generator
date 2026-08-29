@@ -1,7 +1,7 @@
 /*
- * Layout service: preset lookup and random river generator.
+ * Layout service: preset lookup and random water generator.
  * Preset data lives in presets.js (TM.PRESETS).
- * A layout is { width, height, form, rivers }, rivers being [x, y] pairs.
+ * A layout is { width, height, form, water }, water being [x, y] pairs.
  */
 (function (TM) {
     'use strict';
@@ -28,27 +28,27 @@
             width: preset.width,
             height: preset.height,
             form: preset.form,
-            rivers: preset.rivers.map(([x, y]) => [x, y])
+            water: preset.water.map(([x, y]) => [x, y])
         };
     }
 
-    // A random layout, grown as short random walks so the rivers look
-    // river-like instead of like noise. `ratio` is the share of river hexes.
-    function randomizeRivers(width, height, form, ratio) {
+    // A random layout, grown as short random walks so the water hexes cluster
+    // naturally. `ratio` is the share of water hexes.
+    function randomizeWater(width, height, form, ratio) {
         const share = typeof ratio === 'number' ? ratio : 0.28;
         const target = Math.round(TM.totalHexes(width, height, form) * share);
-        const rivers = new Set();
+        const water = new Set();
         const inBounds = (x, y) => !outOfBounds(x, y, width, height, form);
 
         let safety = target * 50 + 1000;
-        while (rivers.size < target && safety-- > 0) {
-            // Start a new short river somewhere.
+        while (water.size < target && safety-- > 0) {
+            // Start a new short cluster somewhere.
             let y = randomInt(0, height - 1);
             let x = randomInt(0, rowWidth(width, y, form) - 1);
 
             const walkLength = randomInt(2, 5);
-            for (let step = 0; step < walkLength && rivers.size < target; step++) {
-                if (inBounds(x, y)) rivers.add(x + ',' + y);
+            for (let step = 0; step < walkLength && water.size < target; step++) {
+                if (inBounds(x, y)) water.add(x + ',' + y);
                 const [nx, ny] = nextHex(x, y, randomInt(0, 5), form);
                 if (!inBounds(nx, ny)) break;
                 x = nx;
@@ -58,10 +58,11 @@
 
         return {
             width, height, form,
-            rivers: [...rivers].map(key => key.split(',').map(Number))
+            water: [...water].map(key => key.split(',').map(Number))
         };
     }
 
-    TM.layout = { presetLabels, getPreset, randomizeRivers };
+    TM.layout = { presetLabels, getPreset, randomizeWater };
 })(window.TM = window.TM || {});
+
 
