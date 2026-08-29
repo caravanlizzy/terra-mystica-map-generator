@@ -3,11 +3,11 @@
  *   0  = water
  *   1  = black
  *   2  = blue
- *   3  = brown
- *   4  = green
- *   5  = grey
- *   6  = red
- *   7  = yellow
+ *   3  = green
+ *   4  = grey
+ *   5  = red
+ *   6  = yellow
+ *   7  = brown
  *  -1  = UNASSIGNED (land hex without a color yet, used while building)
  */
 (function (TM) {
@@ -23,11 +23,11 @@
     const DISPLAY_COLORS = {
         1: '#2b2b2b',   // black
         2: '#3a6ff2',   // blue
-        3: '#835C3B',   // brown
-        4: '#4aa03f',   // green
-        5: '#808080',   // grey
-        6: '#e2373a',   // red
-        7: '#f2e33f',   // yellow
+        3: '#4aa03f',   // green
+        4: '#808080',   // grey
+        5: '#e2373a',   // red
+        6: '#f2e33f',   // yellow
+        7: '#835C3B',   // brown
         0: '#ffffff'    // water
     };
 
@@ -35,11 +35,11 @@
     const BGA_SYMBOLS = {
         1: 'K', // black
         2: 'B', // blue
-        3: 'U', // brown
-        4: 'G', // green
-        5: 'S', // grey
-        6: 'R', // red
-        7: 'Y', // yellow
+        3: 'G', // green
+        4: 'S', // grey
+        5: 'R', // red
+        6: 'Y', // yellow
+        7: 'U', // brown
         0: 'I'  // water
     };
 
