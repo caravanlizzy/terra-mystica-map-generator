@@ -21,7 +21,8 @@
         mode: 'edit',        // 'edit' | 'colored'
         grid: null,          // TM.MapGrid instance (colored mode)
         selected: [],        // [[x, y], ...] land hexes picked for a swap
-        algorithmId: null    // the algorithm chosen in the header
+        algorithmId: null,   // the terrain algorithm chosen in the header
+        waterAlgorithmId: null // the water algorithm chosen in the map editor
     };
 
     const key = (x, y) => x + ',' + y;
@@ -207,8 +208,13 @@
         };
     }
 
+    function terrainAlgorithms() {
+        return TM.algorithms.filter(a => a.target === 'terrain');
+    }
+
     function getSelectedAlgorithm() {
-        return TM.algorithms.find(a => a.id === state.algorithmId) || TM.algorithms[0];
+        const terrain = terrainAlgorithms();
+        return terrain.find(a => a.id === state.algorithmId) || terrain[0];
     }
 
     function generateColors() {
@@ -296,18 +302,41 @@
 
     function fillAlgorithmDropdown() {
         const select = $('algorithm');
-        TM.algorithms.forEach(algorithm => {
+        const algorithms = terrainAlgorithms();
+        algorithms.forEach(algorithm => {
             const option = document.createElement('option');
             option.value = algorithm.id;
             option.textContent = algorithm.label;
             option.title = algorithm.description;
             select.appendChild(option);
         });
-        state.algorithmId = TM.algorithms.length ? TM.algorithms[0].id : null;
+        state.algorithmId = algorithms.length ? algorithms[0].id : null;
         select.value = state.algorithmId || '';
         // Nothing to choose with one algorithm, but keep it visible.
-        select.disabled = TM.algorithms.length < 2;
+        select.disabled = algorithms.length < 2;
         describeSelectedAlgorithm();
+    }
+
+    function fillWaterAlgorithmDropdown() {
+        const select = $('waterAlgorithm');
+        const algorithms = TM.layout.waterAlgorithms();
+        algorithms.forEach(algorithm => {
+            const option = document.createElement('option');
+            option.value = algorithm.id;
+            option.textContent = algorithm.label;
+            option.title = algorithm.description || '';
+            select.appendChild(option);
+        });
+        state.waterAlgorithmId = algorithms.length ? algorithms[0].id : null;
+        select.value = state.waterAlgorithmId || '';
+        // Nothing to choose with one algorithm, but keep it visible.
+        select.disabled = algorithms.length < 2;
+    }
+
+    function selectWaterAlgorithm(id) {
+        const found = TM.layout.waterAlgorithms().find(a => a.id === id);
+        if (found) state.waterAlgorithmId = id;
+        $('waterAlgorithm').value = state.waterAlgorithmId || '';
     }
 
     function describeSelectedAlgorithm() {
@@ -329,6 +358,7 @@
     function init() {
         fillPresetDropdown();
         fillAlgorithmDropdown();
+        fillWaterAlgorithmDropdown();
 
         $('newMap').onclick = newEmptyMap;
         $('generateColors').onclick = generateColors;
@@ -343,12 +373,14 @@
 
         $('algorithm').onchange = (event) => selectAlgorithm(event.target.value);
 
+        $('waterAlgorithm').onchange = (event) => selectWaterAlgorithm(event.target.value);
+
         $('resetWater').onclick = resetWater;
 
         $('randomWater').onclick = () => {
             readDimensions();
             const grid = new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
-            applyLayout(TM.layout.randomizeWater(grid));
+            applyLayout(TM.layout.randomizeWater(grid, state.waterAlgorithmId));
         };
 
         $('exportSvg').onclick = () => download('terra-mystica-map.svg', exportedSvg(), 'image/svg+xml');

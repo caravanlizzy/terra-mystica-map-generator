@@ -1,90 +1,48 @@
 /*
- * Layout service: preset lookup and random water generator.
- * Preset data lives in presets.js (TM.PRESETS).
- * A layout is { width, height, form, water }, water being [x, y] pairs.
+ * Niklassa water algorithm (target: water).
+ *
+ * A water-target algorithm is a plain object:
+ *
+ *   { id, name, label, target: 'water', description, run(grid) }
+ *
+ * `run` receives a MapGrid, assigns grid.water (a Set of "x,y" strings) and
+ * returns the grid. It is picked up automatically by the water select in the
+ * UI because it registers itself in the shared TM.algorithms registry.
+ *
+ * The whole simulated-annealing generator below was lifted verbatim out of
+ * water-layouts.js; the only change is that it now lives inside a single
+ * function and the state it used to keep at module scope are function vars.
  */
 (function (TM) {
     'use strict';
 
-    // Simple random helpers used only within this module.
-    function randomInt(min, max) {
-        return min + Math.floor(Math.random() * (max - min + 1));
-    }
-	
 	function rndint(max) {
 		return Math.floor(Math.random() * max);
 	}
 
-    // { id: label } for the preset dropdown.
-    function presetLabels() {
-        const labels = {};
-        for (const id in TM.PRESETS) labels[id] = TM.PRESETS[id].label;
-        return labels;
-    }
+	function waterNiklassa(grid) {
+		// ######################### variables we need while running the algorithm and dont want to pass around the whole time
+		let cells = [];		// terrain information as 2d array
+		let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
+		let adjsy = [];
+		let adjcols = []; // list per cell of number of each adjacent color
 
-    // Deep copy, so callers may mutate it freely.
-    function getPreset(id) {
-        const preset = TM.PRESETS[id];
-        if (!preset) return null;
-        return {
-            width: preset.width,
-            height: preset.height,
-            form: preset.form,
-            water: preset.water.map(([x, y]) => [x, y])
-        };
-    }
+		let waterborders = 0; // counts how many water hex are at the border
+		let wateradjborders = 0;  // I think this counts water hex at the border that are adjacent to other water hex at the border (and water hex in the corner)
+		let wateradjs = [0,0,0,0,0,0,0]; // lists number of water hex that have this number of water neighbors
+		let landadjs = [0,0,0,0,0,0,0]; // lists number of land hex that have this number of land neighbors
 
-    // A random layout, grown as short random walks so the water hexes cluster
-    // naturally. `ratio` is the share of water hexes.
-    function randomizeWaterOld(grid, ratio) {
-        const share = typeof ratio === 'number' ? ratio : 0.28;
-        const target = Math.round(TM.totalHexes(grid.width, grid.height, grid.form) * share);
-        const water = new Set();
+		let colcounts = [];		// counts the total number of hexes of each color
+		let g = null; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
+		let curenergy = 0; // stores current energy
+		let optcounts = [36,11,11,11,11,11,11,11];  // optimal envisioned number of terrains
 
-        let safety = target * 50 + 1000;
-        while (water.size < target && safety-- > 0) {
-            // Start a new short cluster somewhere.
-            let y = randomInt(0, grid.height - 1);
-            let x = randomInt(0, grid.rowWidth(y) - 1);
+		let landclustern = [];		// counts land clusters of size i
+		let waterclustern = [];	// counts water clusters of size i
+		let nlandcluster = 0;
+		let nwatercluster = 0;	
+		let clusterscan = [];	// temp variable that saves whether a hex has already been counted for cluster computations
 
-            const walkLength = randomInt(2, 5);
-            for (let step = 0; step < walkLength && water.size < target; step++) {
-                if (!grid.outOfBounds(x, y)) water.add(x + ',' + y);
-                const [nx, ny] = grid.neighbor(x, y, randomInt(0, 5));
-                if (grid.outOfBounds(nx, ny)) break;
-                x = nx;
-                y = ny;
-            }
-        }
-
-        grid.water = water;
-        grid.reset();
-        return grid;
-    }
-	
-	// ######################### variables we need while running the algorithm and dont want to pass around the whole time
-	let cells = [];		// terrain information as 2d array
-	let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
-	let adjsy = [];
-	let adjcols = []; // list per cell of number of each adjacent color
-
-	let waterborders = 0; // counts how many water hex are at the border
-	let wateradjborders = 0;  // I think this counts water hex at the border that are adjacent to other water hex at the border (and water hex in the corner)
-	let wateradjs = [0,0,0,0,0,0,0]; // lists number of water hex that have this number of water neighbors
-	let landadjs = [0,0,0,0,0,0,0]; // lists number of land hex that have this number of land neighbors
-
-	let colcounts = [];		// counts the total number of hexes of each color
-	let g = null; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
-	let curenergy = 0; // stores current energy
-	let optcounts = [36,11,11,11,11,11,11,11];  // optimal envisioned number of terrains
-
-	let landclustern = [];		// counts land clusters of size i
-	let waterclustern = [];	// counts water clusters of size i
-	let nlandcluster = 0;
-	let nwatercluster = 0;	
-	let clusterscan = [];	// temp variable that saves whether a hex has already been counted for cluster computations
-	
-    function randomizeWater(grid) {
         const water = new Set();
 
 		g = grid;
@@ -137,9 +95,6 @@
 		}
         grid.water = water;
         grid.reset();
-        return grid;
-    }	
-	
 
 	function optimizewater() {
 		updaterandomwater();
@@ -341,7 +296,15 @@
 
 	// ##### eof niklas massacer
 
-    TM.layout = { presetLabels, getPreset, randomizeWater };
+        return grid;
+	}
+
+    TM.algorithms = TM.algorithms || [];
+    TM.algorithms.push({
+        id: 'water-niklassa',
+        label: 'Niklassa Water',
+        target: 'water',
+        description: 'Simulated-annealing water generator that grows rivers and lakes while penalising isolated hexes, oversized oceans and border clumps.',
+        run: waterNiklassa
+    });
 })(window.TM = window.TM || {});
-
-

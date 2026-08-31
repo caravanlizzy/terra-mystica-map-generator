@@ -24,7 +24,7 @@ src/
   colors.js         # terrain colors, display colors, BGA symbols
   utils.js          # pick(array), shuffle(array)
   grid.js           # MapGrid: cell storage, neighborhood, exports
-  layouts.js        # river presets + random river generator
+  water-layouts.js        # river presets + random river generator
   algorithms.js     # terrain algorithms (add yours here)
   renderer.js       # renders hexes to SVG
   app.js            # controller: state, controls, swap, exports

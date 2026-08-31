@@ -1,11 +1,18 @@
 /*
- * Terrain generation algorithms. Each algorithm is a plain object:
+ * Algorithms live in this folder. Each file registers one algorithm object in
+ * the shared TM.algorithms array:
  *
- *   { id, label, description, fill(grid) }
+ *   { id, name, label, target, description, ... }
  *
- * `fill` receives a reset MapGrid and must assign a terrain color to every
- * land hex before returning. Add new algorithms to the TM.algorithms array
- * at the bottom of this file; they appear automatically in the UI dropdown.
+ *   id      unique string
+ *   name    human readable name (label is kept as an alias for the UI)
+ *   target  'terrain'  → colors the land hexes, exposes fill(grid)
+ *           'water'    → generates the water layout, exposes run(grid)
+ *
+ * Terrain algorithms (target: 'terrain') get a reset MapGrid and must assign a
+ * terrain color to every land hex before returning. They show up automatically
+ * in the terrain "Algorithm" dropdown; water algorithms show up in the water
+ * dropdown next to "Random water".
  *
  * ── MapGrid API (what you can call inside fill) ─────────────────────────────
  *
@@ -32,32 +39,18 @@
     'use strict';
 
     const { TERRAINS } = TM.terrain;
-    const { pick, shuffle } = TM.utils;
+    const { pick } = TM.utils;
 
-    TM.algorithms = [
-        {
-            id: 'random',
-            label: 'Random colors',
-            description: 'Every land hex gets a uniformly random terrain color, independent of its neighbors.',
-            fill(grid) {
-                for (const [x, y] of grid.landCoordinates()) {
-                    grid.set(x, y, pick(TERRAINS));
-                }
-            }
-        },
-        {
-            id: 'balanced',
-            label: 'Balanced random',
-            description: 'Land hexes are shuffled and split into seven equal-sized bands, one per terrain color. Every color appears roughly the same number of times.',
-            fill(grid) {
-                const land = shuffle(grid.landCoordinates());
-                const total = land.length;
-                land.forEach(([x, y], i) => {
-                    // Map position i to one of the seven terrain colors.
-                    const colorIndex = Math.floor(i * TERRAINS.length / total);
-                    grid.set(x, y, TERRAINS[colorIndex]);
-                });
+    TM.algorithms = TM.algorithms || [];
+    TM.algorithms.push({
+        id: 'random',
+        label: 'Random colors',
+        target: 'terrain',
+        description: 'Every land hex gets a uniformly random terrain color, independent of its neighbors.',
+        fill(grid) {
+            for (const [x, y] of grid.landCoordinates()) {
+                grid.set(x, y, pick(TERRAINS));
             }
         }
-    ];
+    });
 })(window.TM = window.TM || {});
