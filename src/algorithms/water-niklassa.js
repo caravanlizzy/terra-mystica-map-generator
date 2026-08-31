@@ -10,8 +10,9 @@
  * UI because it registers itself in the shared TM.algorithms registry.
  *
  * The whole simulated-annealing generator below was lifted verbatim out of
- * water-layouts.js; the only change is that it now lives inside a single
- * function and the state it used to keep at module scope are function vars.
+ * water-layouts.js; the state it needs while running lives as variables shared
+ * by the inner functions of a WaterNiklassa instance, so the helper functions
+ * can share it without passing it around the whole time.
  */
 (function (TM) {
     'use strict';
@@ -20,7 +21,7 @@
 		return Math.floor(Math.random() * max);
 	}
 
-	function waterNiklassa(grid) {
+	function WaterNiklassa() {
 		// ######################### variables we need while running the algorithm and dont want to pass around the whole time
 		let cells = [];		// terrain information as 2d array
 		let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
@@ -40,9 +41,10 @@
 		let landclustern = [];		// counts land clusters of size i
 		let waterclustern = [];	// counts water clusters of size i
 		let nlandcluster = 0;
-		let nwatercluster = 0;	
+		let nwatercluster = 0;
 		let clusterscan = [];	// temp variable that saves whether a hex has already been counted for cluster computations
 
+	function run(grid) {
         const water = new Set();
 
 		g = grid;
@@ -95,6 +97,9 @@
 		}
         grid.water = water;
         grid.reset();
+
+        return grid;
+	}
 
 	function optimizewater() {
 		updaterandomwater();
@@ -293,11 +298,12 @@
 		}	
 	}
 
+		// expose the entry point on the instance
+		this.run = run;
+	}
+
 
 	// ##### eof niklas massacer
-
-        return grid;
-	}
 
     TM.algorithms = TM.algorithms || [];
     TM.algorithms.push({
@@ -305,6 +311,6 @@
         label: 'Niklassa Water',
         target: 'water',
         description: 'Simulated-annealing water generator that grows rivers and lakes while penalising isolated hexes, oversized oceans and border clumps.',
-        run: waterNiklassa
+        run: function (grid) { return new WaterNiklassa().run(grid); }
     });
 })(window.TM = window.TM || {});
