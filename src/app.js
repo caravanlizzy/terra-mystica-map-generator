@@ -166,16 +166,18 @@
         $('editHint').style.display = colored ? 'none' : 'block';
         $('swapHint').style.display = colored ? 'block' : 'none';
         $('backToLayout').style.display = colored ? 'inline-block' : 'none';
-        // The BGA format only exists once colors are generated.
+        // The BGA and snellman formats only exist once colors are generated.
         $('copyBga').disabled = !colored;
+        $('copySnellman').disabled = !colored;
+        $('exportSnellman').disabled = !colored;
         // Layout editing is only meaningful in edit mode.
         $('randomWater').disabled = colored;
         $('resetWater').disabled = colored;
         // Keep the primary action self-describing.
         $('generateColors').textContent = colored ? 'Regenerate colors' : 'Generate colors';
         $('exportHint').textContent = colored
-            ? 'Exporting the generated terrain map. SVG/PNG capture the current view; JSON and BGA include the colors.'
-            : 'Exporting the current layout. Generate colors to also export the terrain map and BGA format.';
+            ? 'Exporting the generated terrain map. SVG/PNG capture the current view; JSON, BGA and snellman include the colors.'
+            : 'Exporting the current layout. Generate colors to also export the terrain map, BGA and snellman formats.';
 
         if (colored) {
             $('swapStatus').textContent = state.selected.length === 0
@@ -444,6 +446,15 @@
             if (state.mode !== 'colored' || !state.grid) return;
             await navigator.clipboard.writeText(TM.export.bgaFormat(state.grid));
             feedback($('copyBga'), 'Copied!');
+        };
+        $('exportSnellman').onclick = () => {
+            if (state.mode !== 'colored' || !state.grid) return;
+            download('terra-mystica-map.snellman.txt', TM.export.snellmanFormat(state.grid), 'text/plain');
+        };
+        $('copySnellman').onclick = async () => {
+            if (state.mode !== 'colored' || !state.grid) return;
+            await navigator.clipboard.writeText(TM.export.snellmanFormat(state.grid));
+            feedback($('copySnellman'), 'Copied!');
         };
 
         readDimensions();

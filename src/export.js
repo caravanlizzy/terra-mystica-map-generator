@@ -14,6 +14,27 @@
             .join('\n');
     }
 
+    // Juho Snellman's Terra Mystica engine map format (the `size:` + `landscape:`
+    // sections of a saved game at terra.snellman.net), so the generated map can
+    // replace the map in a save fed to the AI. The board is kept rectangular:
+    // short rows are padded with `N` and indented with a leading space, and every
+    // row ends with a trailing comma, matching the engine's own output.
+    function snellmanFormat(grid) {
+        const lines = [
+            'size:',
+            grid.width + ',' + grid.height + ',' + (grid.form === 1 ? 'true' : 'false'),
+            '',
+            'landscape:'
+        ];
+        grid.toGrid().forEach(cells => {
+            const row = cells.map(bgaSymbol);
+            const isShort = row.length < grid.width;
+            while (row.length < grid.width) row.push('N');
+            lines.push((isShort ? ' ' : '') + row.join(',') + ',');
+        });
+        return lines.join('\n');
+    }
+
     // Plain-object representation of the current app state, suitable for JSON
     // serialisation. `state` must expose { width, height, form, water,
     // mode, grid, algorithmId }.
@@ -27,11 +48,12 @@
         if (state.mode === 'colored' && state.grid) {
             data.colors = state.grid.toGrid();
             data.bga = bgaFormat(state.grid);
+            data.snellman = snellmanFormat(state.grid);
             data.algorithm = state.algorithmId;
         }
         return data;
     }
 
-    TM.export = { bgaFormat, toJson };
+    TM.export = { bgaFormat, snellmanFormat, toJson };
 })(window.TM = window.TM || {});
 
