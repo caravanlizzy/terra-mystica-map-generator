@@ -27,6 +27,7 @@
 		let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
 		let adjsy = [];
 		let adjcols = []; // list per cell of number of each adjacent color
+		let sizefactor = 1;
 
 		let waterborders = 0; // counts how many water hex are at the border
 		let wateradjborders = 0;  // I think this counts water hex at the border that are adjacent to other water hex at the border (and water hex in the corner)
@@ -48,6 +49,13 @@
         const water = new Set();
 
 		g = grid;
+		
+		// have some compensation for target sizes in larger maps
+		sizefactor = g.nHexes() / 113.;
+		console.log("sizefactor: ", sizefactor);
+		
+		// set the actually optimal count of water
+		optcounts[0] = g.nHexes() - 7 * Math.round(g.nHexes() * (1 - 0.32) / 7.);		
 
 		cells = []; adjsx = []; adjsy = []; adjcols = [];
 		// generate the field
@@ -81,9 +89,7 @@
 		// now optimize
 		for (let k = 0; k < 10000; k++) {
 			optimizewater();
-			//console.log(waterborders);
-			console.log("curenergy", curenergy);
-			console.log(wateradjs);
+			//console.log("curenergy", curenergy);
 		}		
 
 
@@ -104,9 +110,8 @@
 	function optimizewater() {
 		updaterandomwater();
 		swaprandomwater()
-		
-
 	}
+	
 	function precalc() { // do somewhat unified pre calculations for energy:
 		// // centers
 		// for (let k = 0; k < ncols; k++) { // cx = 5.79, cy = 4
@@ -150,21 +155,21 @@
 		
 		let sum = 0;
 		sum += 3 * Math.abs(colcounts[0] - optcounts[0]); // target number of water hex
-		sum += 2 * Math.max(waterborders - 6, 0); // target number of water hex at border 
+		sum += 2 * Math.max(waterborders - 6 * sizefactor, 0); // target number of water hex at border 
 		sum += 2 * wateradjborders;			// penalizes adjacent border water hexx
 		sum += 3 * wateradjs[0]; // penalty for isolated water hex		
-		sum += 2 * Math.max(wateradjs[1] - 1.5, 0);	// penalty for having too many "river ends"
-		sum += Math.max(wateradjs[3] - 3.5, 0); 	// penalty for too many river crossings
-		sum += Math.max(wateradjs[4] - 0.5, 0);	// penalty for too many "fords"
-		sum += 2 * Math.max(wateradjs[5],0);		// penalty for any almost ocean tiles
-		sum += 3 * Math.max(wateradjs[6],0);		// penalty for true ocean
+		sum += 2 * Math.max(wateradjs[1] - 1.5 * sizefactor, 0);	// penalty for having too many "river ends"
+		sum += Math.max(wateradjs[3] - 3.5 * sizefactor, 0); 	// penalty for too many river crossings
+		sum += Math.max(wateradjs[4] - 0.5 * sizefactor, 0);	// penalty for too many "fords"
+		sum += 2 * Math.max(wateradjs[5] - (sizefactor - 1),0);		// penalty for any almost ocean tiles
+		sum += 3 * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
 		
 		sum += 5 * landadjs[0];	// penalty for islands
-		sum += Math.max(landadjs[1] - 5, 0);	// penalty for too many halfislands
-		sum += Math.max(landadjs[2] - 10, 0);	// penalty for too many landbridges
-		sum += 5 * Math.max(1 - landadjs[5], 0); // penalty for too few coastal hex
-		sum += Math.max(landadjs[6] - 10, 0);	// penalty for too many inland hex
-		sum += 5 * Math.max(2 - landadjs[6], 0);	// penalty for too few inland hex
+		sum += Math.max(landadjs[1] - 5 * sizefactor, 0);	// penalty for too many halfislands
+		sum += Math.max(landadjs[2] - 9 * sizefactor, 0);	// penalty for too many landbridges
+		sum += 5 * Math.max(2 * sizefactor - landadjs[5], 0); // penalty for too few coastal hex
+		sum += Math.max(landadjs[6] - 10 * sizefactor, 0);	// penalty for too many inland hex
+		sum += 5 * Math.max(3 * sizefactor - landadjs[6], 0);	// penalty for too few inland hex
 		
 		for (let i = 0; i < 6; i++) {
 			if (waterclustern[i] > 0) sum += waterclustern[i]*5;  // penalizes water clusters below size 6?

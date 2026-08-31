@@ -29,6 +29,7 @@
         rowWidth(y) { return rowWidth(this.width, y, this.form); }
         outOfBounds(x, y) { return outOfBounds(x, y, this.width, this.height, this.form); }
         neighbor(x, y, dir) { return nextHex(x, y, dir, this.form); }
+        nHexes() { return totalHexes(this.width, this.height, this.form); }
 
         // In-bounds neighbors of (x, y), as [x, y] pairs.
         neighbors(x, y) {
@@ -61,6 +62,28 @@
             for (let y = 0; y < this.height; y++) {
                 for (let x = 0; x < this.rowWidth(y); x++) visit(x, y);
             }
+        }
+
+       // some algorithms may want to know the center of mass
+        centerOfMass() {
+			let sx = 0, sy = 0, n = 0;
+            for (let y = 0; y < this.height; y++) {
+                for (let x = 0; x < this.rowWidth(y); x++) {
+					sx += x; sy += y; n++;
+				}
+            }
+			return [sx / n, sy / n];
+        }
+
+		// number of border hex
+        nBorderHexes() {
+			let n = 0;
+            for (let y = 0; y < this.height; y++) {
+                for (let x = 0; x < this.rowWidth(y); x++) {
+					if (this.neighbors(x,y).length <= 5) n++;
+				}
+            }
+			return n;
         }
 
         // The non-water hexes, i.e. those that get a terrain color.
