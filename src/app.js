@@ -337,7 +337,6 @@
         $('preset').onchange = (event) => {
             const layout = TM.layout.getPreset(event.target.value);
             if (layout) applyLayout(layout);
-            event.target.value = '';
         };
 
         $('form').onchange = () => { readDimensions(); renderCurrent(); };
