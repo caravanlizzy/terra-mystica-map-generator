@@ -22,8 +22,13 @@
         grid: null,          // TM.MapGrid instance (colored mode)
         selected: [],        // [[x, y], ...] land hexes picked for a swap
         algorithmId: null,   // the terrain algorithm chosen in the header
-        waterAlgorithmId: null // the water algorithm chosen in the map editor
+        waterAlgorithmId: null, // the water algorithm chosen in the map editor
+        zoom: 1,             // display scale for the rendered map
+        lastSize: null       // intrinsic canvas size from the last render
     };
+
+    const ZOOM_MIN = 0.1;
+    const ZOOM_MAX = 4;
 
     const key = (x, y) => x + ',' + y;
 
@@ -104,15 +109,44 @@
 
     function renderCurrent() {
         const colored = state.mode === 'colored' && state.grid;
-        TM.renderer.render(svg, {
+        state.lastSize = TM.renderer.render(svg, {
             width: state.width,
             height: state.height,
             form: state.form,
             cellFor: colored ? coloredCell : editCell,
             onClick: colored ? onColoredClick : onEditClick
         });
+        applyZoom();
         updateStats();
         updateModeUi();
+    }
+
+    /* ---------- zoom ---------- */
+
+    // Scale only the displayed SVG size; the viewBox stays intact so exports and
+    // click coordinates are unaffected.
+    function applyZoom() {
+        if (!state.lastSize) return;
+        svg.style.width = (state.lastSize.width * state.zoom) + 'px';
+        svg.style.height = (state.lastSize.height * state.zoom) + 'px';
+        $('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
+    }
+
+    function setZoom(z) {
+        state.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+        applyZoom();
+    }
+
+    // Shrink (or grow) the map so the whole thing fits the visible canvas area,
+    // accounting for the 24px svg margin on each side.
+    function fitZoom() {
+        if (!state.lastSize) return;
+        const wrap = $('canvasWrap');
+        const margin = 48;
+        const availW = wrap.clientWidth - margin;
+        const availH = wrap.clientHeight - margin;
+        const z = Math.min(availW / state.lastSize.width, availH / state.lastSize.height);
+        setZoom(z > 0 ? z : 1);
     }
 
     /* ---------- stats & mode UI ---------- */
@@ -245,6 +279,8 @@
 
     function exportedSvg() {
         const clone = svg.cloneNode(true);
+        clone.style.width = '';
+        clone.style.height = '';
         clone.querySelectorAll('.label').forEach(e => (e.textContent = ''));
         clone.querySelectorAll('.selected-hex').forEach(e => e.remove());
         clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -392,6 +428,10 @@
             const grid = new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
             applyLayout(TM.layout.randomizeWater(grid, state.waterAlgorithmId));
         };
+
+        $('zoomIn').onclick = () => setZoom(state.zoom * 1.2);
+        $('zoomOut').onclick = () => setZoom(state.zoom / 1.2);
+        $('zoomFit').onclick = fitZoom;
 
         $('exportSvg').onclick = () => download('terra-mystica-map.svg', exportedSvg(), 'image/svg+xml');
         $('exportPng').onclick = exportPng;

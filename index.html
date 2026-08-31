@@ -68,6 +68,12 @@
 
     <main>
         <section id="canvasWrap">
+            <div class="zoom-controls">
+                <button id="zoomOut" title="Zoom out">&minus;</button>
+                <span id="zoomLevel" class="zoom-level" title="Current zoom">100%</span>
+                <button id="zoomIn" title="Zoom in">+</button>
+                <button id="zoomFit" title="Fit the whole map into view">Fit</button>
+            </div>
             <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Hex map"></svg>
         </section>
     </main>
