@@ -54,6 +54,7 @@
         fill(grid) {
 			// ######################### variables we need while running the algorithm and dont want to pass around the whole time
 			let g = grid; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
+			let sizefactor = g.nHexes() / 113.;;
 
 			let cells = [];		// terrain information as 2d array		
 			let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
@@ -135,7 +136,7 @@
 			curenergy = colorenergy();
 			
 			// now optimize
-			let noptsteps = g.nHexes() * 300;
+			let noptsteps = 30000 * sizefactor * Math.max(1,sizefactor);
 			for (let k = 0; k < noptsteps; k++) {
 				optimizecolor();
 				console.log("curenergy", curenergy);
