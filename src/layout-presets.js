@@ -3,7 +3,7 @@
  * Each entry is { label, width, height, form, water } where `water` is an
  * array of [x, y] coordinate pairs marking the water hexes.
  *
- * No logic lives here – see layouts.js for the preset service and the random
+ * No logic lives here – see water-layouts.js for the preset service and the random
  * water generator.
  */
 (function (TM) {
@@ -29,11 +29,6 @@
             label: 'Loon Lakes',
             width: 13, height: 9, form: 1,
             water: [[8, 0], [9, 0], [3, 1], [4, 1], [7, 1], [10, 1], [1, 2], [2, 2], [6, 2], [10, 2], [3, 3], [7, 3], [8, 3], [10, 3], [2, 4], [5, 4], [6, 4], [8, 4], [1, 5], [4, 5], [6, 5], [8, 5], [1, 6], [2, 6], [3, 6], [9, 6], [10, 6], [3, 7], [7, 7], [8, 7], [11, 7], [2, 8], [4, 8], [5, 8], [6, 8]]
-        },
-        onion: {
-            label: 'Onion',
-            width: 13, height: 9, form: 0,
-            water: [[3, 1], [4, 1], [5, 1], [6, 1], [7, 1], [8, 1], [2, 2], [3, 2], [9, 2], [10, 2], [2, 3], [6, 3], [9, 3], [3, 4], [5, 4], [6, 4], [7, 4], [9, 4], [10, 4], [11, 4], [12, 4], [1, 5], [2, 5], [6, 5], [10, 5], [2, 6], [3, 6], [4, 6], [9, 6], [10, 6], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7], [8, 7]]
         },
         archipelago: {
             label: 'Archipelago',
