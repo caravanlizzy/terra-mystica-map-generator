@@ -30,6 +30,8 @@
     const ZOOM_MIN = 0.1;
     const ZOOM_MAX = 4;
 
+    const WHEEL_RADIUS = 35;   // terrain wheel: distance from center, in %
+
     const key = (x, y) => x + ',' + y;
 
     /* ---------- rendering ---------- */
@@ -147,6 +149,26 @@
         const availH = wrap.clientHeight - margin;
         const z = Math.min(availW / state.lastSize.width, availH / state.lastSize.height);
         setZoom(z > 0 ? z : 1);
+    }
+
+    /* ---------- terrain wheel ---------- */
+
+    // Reference widget: one dot per terrain value 1-7 (which is wheel order),
+    // placed clockwise from the top in the color the renderer actually paints.
+    // One step around the wheel is one spade.
+    function renderColorWheel() {
+        const ring = $('colorWheel');
+        const step = 360 / TM.terrain.TERRAINS.length;
+        ring.textContent = '';
+        TM.terrain.TERRAINS.forEach((value, i) => {
+            const angle = (i * step - 90) * Math.PI / 180;
+            const dot = document.createElement('div');
+            dot.className = 'wheel-dot';
+            dot.style.background = displayColor(value);
+            dot.style.left = (50 + WHEEL_RADIUS * Math.cos(angle)) + '%';
+            dot.style.top = (50 + WHEEL_RADIUS * Math.sin(angle)) + '%';
+            ring.appendChild(dot);
+        });
     }
 
     /* ---------- stats & mode UI ---------- */
@@ -397,6 +419,7 @@
         fillPresetDropdown();
         fillAlgorithmDropdown();
         fillWaterAlgorithmDropdown();
+        renderColorWheel();
 
         $('newMap').onclick = newEmptyMap;
         $('generateColors').onclick = generateColors;
