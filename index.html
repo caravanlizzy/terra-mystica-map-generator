@@ -9,61 +9,94 @@
 <body>
 <header>
     <h1>Terra Mystica Map Layout Tool</h1>
-    <div class="controls">
-        <label>Width (X)<input id="width" type="number" min="1" max="40" value="13"></label>
-        <label>Height (Y)<input id="height" type="number" min="1" max="40" value="9"></label>
-        <label>Form
-            <select id="form">
-                <option value="0">0 &ndash; top row longer</option>
-                <option value="1">1 &ndash; top row shorter</option>
-            </select>
-        </label>
-        <label>Preset
-            <select id="preset">
-                <option value="">&mdash; none &mdash;</option>
-            </select>
-        </label>
-        <label title="Which algorithm distributes the terrain colors over the land hexes.">Terrain Algorithm
-            <select id="algorithm"></select>
-        </label>
-        <button id="newMap">New empty map</button>
-        <button class="primary" id="generateColors">Generate colors</button>
-        <button id="backToLayout" style="display:none">Back to layout</button>
-    </div>
+    <span class="small version">v1.0.0</span>
 </header>
 
-<main>
-    <aside>
-        <h2>Map editor</h2>
-        <p class="hint" id="editHint">
-            Click a hex to toggle it between <b>land</b> and <b>water</b>.
-            Pick a preset or randomize a layout, then
-            press <b>Generate colors</b> to distribute the seven terrain colors.
-        </p>
-        <p class="hint" id="swapHint" style="display:none">
-            Colors generated. Click <b>exactly two land hexes</b> to swap them
-            (water hexes cannot be swapped). Click a selected hex again to deselect it.
-        </p>
+<!-- Two sidebars flank the map: left drives size + water, right handles terrain + export. -->
+<div class="layout">
+    <aside class="sidebar sidebar-left">
+        <!-- Step 1: global settings that define the map before anything is generated. -->
+        <section class="panel step">
+            <h2 class="panel-title">1. Global settings</h2>
+            <p class="hint">
+                Set the map size and form first. Changing width or height updates the map right away.
+            </p>
+            <div class="field-row">
+                <label>Width (X)<input id="width" type="number" min="1" max="40" value="13"></label>
+                <label>Height (Y)<input id="height" type="number" min="1" max="40" value="9"></label>
+            </div>
+            <label>Form
+                <select id="form">
+                    <option value="0">0 &ndash; top row longer</option>
+                    <option value="1">1 &ndash; top row shorter</option>
+                </select>
+            </label>
+            <button id="newMap">New empty map</button>
 
-        <div class="stat"><span>Width</span><b id="statW">13</b></div>
-        <div class="stat"><span>Height</span><b id="statH">9</b></div>
-        <div class="stat"><span>Form</span><b id="statForm">0</b></div>
-        <div class="stat"><span>Total hexes</span><b id="statTotal">117</b></div>
-        <div class="stat"><span>Land hexes</span><b id="statLand">117</b></div>
-        <div class="stat"><span>Water hexes</span><b id="statWater">0</b></div>
+            <div class="stats">
+                <div class="stat"><span>Width</span><b id="statW">13</b></div>
+                <div class="stat"><span>Height</span><b id="statH">9</b></div>
+                <div class="stat"><span>Form</span><b id="statForm">0</b></div>
+                <div class="stat"><span>Total hexes</span><b id="statTotal">117</b></div>
+                <div class="stat"><span>Land hexes</span><b id="statLand">117</b></div>
+                <div class="stat"><span>Water hexes</span><b id="statWater">0</b></div>
+            </div>
+            <p class="small">Coordinates are zero-based (x = column, y = row); rows alternate between the full width and one hex less.</p>
+        </section>
 
-        <div id="swapStatus"></div>
-
-        <div class="actions">
+        <!-- Step 2: build the water layout from a preset, an algorithm, or by hand. -->
+        <section class="panel step">
+            <h2 class="panel-title">2. Water layout</h2>
+            <p class="hint" id="editHint">
+                Pick a preset or generate random water, then <b>click any hex</b> to
+                toggle it between <b>land</b> and <b>water</b> &ndash; adjust as much as you like.
+            </p>
+            <label>Preset
+                <select id="preset">
+                    <option value="">&mdash; none &mdash;</option>
+                </select>
+            </label>
             <label title="Which algorithm generates the random water layout.">Water algorithm
                 <select id="waterAlgorithm"></select>
             </label>
-            <button id="randomWater">Generate water</button>
-            <button id="resetWater" title="Turn every water hex back into land, keeping the current size and form.">Reset water</button>
-        </div>
+            <div class="actions">
+                <button id="randomWater">Generate water</button>
+                <button id="resetWater" title="Turn every water hex back into land, keeping the current size and form.">Reset water</button>
+            </div>
+        </section>
+    </aside>
 
-        <div class="export" id="exportSection">
-            <h3 class="export-title">Export</h3>
+    <main>
+        <section id="canvasWrap">
+            <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Hex map"></svg>
+        </section>
+    </main>
+
+    <aside class="sidebar sidebar-right">
+        <!-- Step 3: distribute terrain colors and fine-tune them by swapping hexes. -->
+        <section class="panel step">
+            <h2 class="panel-title">3. Terrain</h2>
+            <p class="hint">
+                Choose a terrain algorithm and generate the colors. You can regenerate or
+                swap hexes afterwards without losing the water layout.
+            </p>
+            <label title="Which algorithm distributes the terrain colors over the land hexes.">Terrain algorithm
+                <select id="algorithm"></select>
+            </label>
+            <div class="actions">
+                <button class="primary" id="generateColors">Generate colors</button>
+                <button id="backToLayout" style="display:none">Back to layout</button>
+            </div>
+            <p class="hint" id="swapHint" style="display:none">
+                Colors generated. Click <b>exactly two land hexes</b> to swap them
+                (water hexes cannot be swapped). Click a selected hex again to deselect it.
+            </p>
+            <div id="swapStatus"></div>
+        </section>
+
+        <!-- Step 4: export the current map. -->
+        <section class="panel step export" id="exportSection">
+            <h2 class="panel-title">4. Export</h2>
             <p class="export-hint" id="exportHint">Exporting the current layout. Generate colors to also export the terrain map and BGA format.</p>
             <div class="export-group">
                 <span class="export-label">Download file</span>
@@ -80,15 +113,9 @@
                     <button id="copyBga" disabled title="Generate colors first to copy the BGA format.">BGA format</button>
                 </div>
             </div>
-        </div>
-        <p class="small">Coordinates are zero-based (x = column, y = row); rows alternate between the full width and one hex less.</p>
-        <p class="small version">v1.0.0</p>
+        </section>
     </aside>
-
-    <section id="canvasWrap">
-        <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Hex map"></svg>
-    </section>
-</main>
+</div>
 
 <!-- Loaded in dependency order -->
 <script src="src/hexGrid.js"></script>
