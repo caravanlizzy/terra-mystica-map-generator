@@ -371,6 +371,16 @@
 
         $('form').onchange = () => { readDimensions(); renderCurrent(); };
 
+        // Redraw the map immediately as the size changes, without forcing the
+        // input value back mid-typing (so the caret / partial entry is kept).
+        const liveResize = () => {
+            state.width = Math.max(1, Math.min(40, +$('width').value || 13));
+            state.height = Math.max(1, Math.min(40, +$('height').value || 9));
+            renderCurrent();
+        };
+        $('width').oninput = liveResize;
+        $('height').oninput = liveResize;
+
         $('algorithm').onchange = (event) => selectAlgorithm(event.target.value);
 
         $('waterAlgorithm').onchange = (event) => selectWaterAlgorithm(event.target.value);
