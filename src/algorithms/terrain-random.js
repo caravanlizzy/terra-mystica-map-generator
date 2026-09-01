@@ -78,7 +78,11 @@
 
 			let countfails = 0; // total number of each color deviations
 			let adjfails = 0; // no two colors adjacent
-			let neighfails = 0; // there should not be one color triply incident to the same hex. with > 4 neighb. there should be 4 diff colors, with >
+			
+			let neighfails = 0; // counts the number of fields that have the same color three times as neighbor
+			let neighdivs = []; 	// 2d array... counts the occurrence for every hex degree of different adjcolors 
+			
+			
 			let ship1fails = 0; 
 
 			let clusterscan = []; // temp state for color+next2colors cluster recognition
@@ -126,6 +130,13 @@
 					}
 				}
 			}
+			// prepare neighdivs
+			for (let i = 1; i <= 6; i++) {
+				neighdivs[i] = [];
+				for (let j = 0; j <= i; j++) {
+					neighdivs[i][j] = 0;
+				}
+			}
 			
 			
 			
@@ -141,7 +152,7 @@
 				optimizecolor();
 				console.log("curenergy", curenergy);
 			}		
-			
+			console.log(neighdivs);
 			
 			// translating it back to the grid
 			
@@ -172,10 +183,17 @@
 					sum += 3 * Math.abs(colcounts[i] - optcounts[i]);		// incentivizes optimal color count
 				}
 				sum += 3 * adjfails; // penalizes same colors being adjacent
-				sum	+= 5 * neighfails; // penalizes the neighbourhood being too uniform
+				sum	+= 8 * neighfails; // penalizes hexes that have one color three times as neighbor
+				// neighbourhood diversity fails:
+				sum += neighdivs[3][2];
+				sum += 3 * neighdivs[4][2] + neighdivs[4][3];
+				sum += 6 * neighdivs[5][2] + 4 * neighdivs[5][3] +  neighdivs[5][4];
+				sum += 6 * neighdivs[6][2] + 6 * neighdivs[6][3] + 2 * neighdivs[6][4] + 3 * neighdivs[6][6];
+				
+				
 				sum += centersfail; // penalize uneven distribution of colors spatially
 				sum += 3 * clusteropfail + clustergoodfail + 0.015 * clusterdecentfail;	// penalizes large clusters of color+(colors that are adjacent in color-circle)
-				sum += 2 * ship1fails; // this penalizes ship1 same color neighbors  (honestly this doesnt look super good since it doesnt seem to penalize if the distribution among the colors is bad, it just reduces total ship1 adjacencies)
+//				sum += 2 * ship1fails; // this penalizes ship1 same color neighbors  (honestly this doesnt look super good since it doesnt seem to penalize if the distribution among the colors is bad, it just reduces total ship1 adjacencies)
 				sum += 2 * colorborderfail;  // penalizes uneven distribution of border hex among the colors
 				sum += 1.5 * extclusterfail; // penalizes clusters but clusters with ship1
 				
@@ -211,7 +229,7 @@
 						centersx[c] += x;
 						centersy[c] += y;			
 					 }
-				 }
+				}
 				for (let k = 0; k < 8; k++) {
 					centersx[k] = centersx[k] / colcounts[k]; 
 					centersy[k] = centersy[k] / colcounts[k]; 
@@ -254,6 +272,13 @@
 				adjfails = 0;
 				neighfails = 0;
 
+				// prepare neighdivs
+				for (let i = 1; i <= 6; i++) {
+					for (let j = 0; j <= i; j++) {
+						neighdivs[i][j] = 0;
+					}
+				}
+
 				for (let j = 0; j < grid.height; j++) {
 					for (let i = 0; i < grid.rowWidth(j); i++) {
 						if (cells[j][i] == 0) continue; // do water seperately
@@ -268,7 +293,7 @@
 
 				let ncol = adjcols[y][x];
 				
-				if (ncol[c] > 0) adjfails += ncol[c];
+				if (ncol[c] > 0) adjfails += ncol[c];  // add how many neighbors with the same color
 				
 				let ndif = 0; // how many different colors appear
 				let nn = 0; // number of neighbours
@@ -278,8 +303,10 @@
 					nn += ncol[i];
 					if (ncol[i] >= 3) neighfails++; // three times is too much
 				}
-				if ((nn >= 5) && (ndif < 4)) neighfails++;  // too few different neighbor colors
-				if ((nn == 4) && (ndif < 3)) neighfails++;  // same but for hex really at the boundary
+				neighdivs[nn][ndif]++;
+				// if ((nn >= 5) && (ndif < 4)) neighfails++;  // too few different neighbor colors
+				// if ((nn == 4) && (ndif < 3)) neighfails++;  // same but for hex really at the boundary
+				
 			}
 			
 
