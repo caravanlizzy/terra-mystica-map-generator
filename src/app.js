@@ -1,8 +1,8 @@
 /*
  * Application controller: wires the DOM controls to the services and renderer.
  *
- * Two modes: 'edit' draws the water layout (a click toggles land / water),
- * 'colored' shows the generated terrains (click two land hexes to swap them).
+ * Two modes: 'edit' draws the water layout (a click toggles land / water) and
+ * 'colored' shows terrain colors (click two land hexes to swap them).
  */
 (function (TM) {
     'use strict';
@@ -19,7 +19,7 @@
         form: 0,
         water: new Set(),    // "x,y" of water hexes (edit mode)
         mode: 'edit',        // 'edit' | 'colored'
-        grid: null,          // TM.MapGrid instance (colored mode)
+        grid: null,          // TM.MapGrid instance for a colored view
         selected: [],        // [[x, y], ...] land hexes picked for a swap
         algorithmId: null,   // the terrain algorithm chosen in the header
         waterAlgorithmId: null, // the water algorithm chosen in the map editor
@@ -33,7 +33,6 @@
     const WHEEL_RADIUS = 35;   // terrain wheel: distance from center, in %
 
     const key = (x, y) => x + ',' + y;
-
     /* ---------- rendering ---------- */
 
     function isSingleWater(x, y) {
@@ -78,6 +77,9 @@
     }
 
     function onEditClick(x, y) {
+        state.grid = null;
+        state.selected = [];
+        $('preset').value = '';
         const k = key(x, y);
         if (state.water.has(k)) state.water.delete(k);
         else state.water.add(k);
@@ -185,9 +187,9 @@
 
     function updateModeUi() {
         const colored = state.mode === 'colored';
-        $('editHint').style.display = colored ? 'none' : 'block';
-        $('swapHint').style.display = colored ? 'block' : 'none';
-        $('backToLayout').style.display = colored ? 'inline-block' : 'none';
+        const hasTerrain = Boolean(state.grid);
+        $('editHint').style.display = hasTerrain ? 'none' : 'block';
+        $('swapHint').style.display = hasTerrain ? 'block' : 'none';
         // The BGA and snellman formats only exist once colors are generated.
         $('copyBga').disabled = !colored;
         $('copySnellman').disabled = !colored;
@@ -195,16 +197,19 @@
         // Layout editing is only meaningful in edit mode.
         $('randomWater').disabled = colored;
         $('resetWater').disabled = colored;
-        // Keep the primary action self-describing.
-        $('generateColors').textContent = colored ? 'Regenerate colors' : 'Generate colors';
-        $('exportHint').textContent = colored
-            ? 'Exporting the generated terrain map. SVG/PNG capture the current view; JSON, BGA and snellman include the colors.'
+        $('toggleTerrain').disabled = !state.grid;
+        $('toggleTerrain').setAttribute('aria-pressed', String(colored));
+        $('toggleTerrain').setAttribute('aria-label', colored ? 'Show river layout' : 'Show terrain colors');
+        $('toggleTerrain').title = colored ? 'Show river layout' : 'Show terrain colors';
+        $('generateColors').textContent = 'Generate colors';
+        $('exportHint').textContent = hasTerrain
+            ? 'Terrain colors are available. Switch to terrain view to export the terrain map, BGA or snellman format.'
             : 'Exporting the current layout. Generate colors to also export the terrain map, BGA and snellman formats.';
 
-        if (colored) {
-            $('swapStatus').textContent = state.selected.length === 0
-                ? 'Click two land hexes to swap them.'
-                : 'One hex selected – click a second land hex to swap.';
+        if (hasTerrain) {
+            $('swapStatus').textContent = colored && state.selected.length === 1
+                ? 'One hex selected – click a second land hex to swap.'
+                : 'In terrain view, click two land hexes to swap them.';
         } else {
             $('swapStatus').textContent = '';
         }
@@ -222,16 +227,19 @@
 
     /* ---------- actions ---------- */
 
-    function enterEditMode() {
+    function enterEditMode(clearPreset, clearColors) {
         state.mode = 'edit';
-        state.grid = null;
         state.selected = [];
+        if (clearColors) state.grid = null;
+        if (clearPreset) {
+            $('preset').value = '';
+        }
     }
 
     function newEmptyMap() {
         readDimensions();
         state.water.clear();
-        enterEditMode();
+        enterEditMode(true, true);
         renderCurrent();
     }
 
@@ -239,7 +247,7 @@
     // width/height inputs, so a size typed but not applied stays unapplied.
     function resetWater() {
         state.water.clear();
-        enterEditMode();
+        enterEditMode(true, true);
         renderCurrent();
     }
 
@@ -250,7 +258,8 @@
         state.water = layout.water instanceof Set
             ? new Set(layout.water)
             : new Set((layout.water || []).map(item => Array.isArray(item) ? key(item[0], item[1]) : String(item)));
-        enterEditMode();
+        enterEditMode(true, true);
+        if (layout.terrain) state.grid = presetColorGrid(layout);
         $('width').value = state.width;
         $('height').value = state.height;
         $('form').value = state.form;
@@ -285,9 +294,14 @@
         renderCurrent();
     }
 
-    function backToLayout() {
-        enterEditMode();
-        renderCurrent();
+    function presetColorGrid(layout) {
+        const grid = new TM.MapGrid(layout);
+        layout.terrain.forEach((row, y) => {
+            for (let x = 0; x < grid.rowWidth(y); x++) {
+                grid.set(x, y, row[x]);
+            }
+        });
+        return grid;
     }
 
     /* ---------- export helpers ---------- */
@@ -423,20 +437,36 @@
 
         $('newMap').onclick = newEmptyMap;
         $('generateColors').onclick = generateColors;
-        $('backToLayout').onclick = backToLayout;
 
         $('preset').onchange = (event) => {
             const layout = TM.layout.getPreset(event.target.value);
-            if (layout) applyLayout(layout);
+            if (layout) {
+                applyLayout(layout);
+            } else {
+                enterEditMode(true, true);
+                renderCurrent();
+            }
         };
 
-        $('form').onchange = () => { readDimensions(); renderCurrent(); };
+        $('toggleTerrain').onclick = () => {
+            if (!state.grid) return;
+            state.mode = state.mode === 'colored' ? 'edit' : 'colored';
+            state.selected = [];
+            renderCurrent();
+        };
+
+        $('form').onchange = () => {
+            readDimensions();
+            enterEditMode(true, true);
+            renderCurrent();
+        };
 
         // Redraw the map immediately as the size changes, without forcing the
         // input value back mid-typing (so the caret / partial entry is kept).
         const liveResize = () => {
             state.width = Math.max(1, Math.min(40, +$('width').value || 13));
             state.height = Math.max(1, Math.min(40, +$('height').value || 9));
+            enterEditMode(true, true);
             renderCurrent();
         };
         $('width').oninput = liveResize;
@@ -490,4 +520,3 @@
         init();
     }
 })(window.TM = window.TM || {});
-

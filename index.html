@@ -73,6 +73,17 @@
                 <span id="zoomLevel" class="zoom-level" title="Current zoom">100%</span>
                 <button id="zoomIn" title="Zoom in">+</button>
                 <button id="zoomFit" title="Fit the whole map into view">Fit</button>
+                <button id="toggleTerrain" class="terrain-toggle" disabled aria-label="Show terrain colors" aria-pressed="false" title="Show terrain colors">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <polygon points="12,2 12,12 3.3,7" fill="#fff"/>
+                        <polygon points="3.3,7 12,12 12,22 3.3,17" fill="#2b2b2b"/>
+                        <polygon points="12,2 20.7,7 12,12" fill="#3a6ff2"/>
+                        <polygon points="20.7,7 20.7,12 12,12" fill="#4aa03f"/>
+                        <polygon points="20.7,12 20.7,17 12,12" fill="#e2373a"/>
+                        <polygon points="20.7,17 12,22 12,12" fill="#f2e33f"/>
+                        <polygon points="12,2 20.7,7 20.7,17 12,22 3.3,17 3.3,7" fill="none" stroke="#333" stroke-width="1.25"/>
+                    </svg>
+                </button>
             </div>
             <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Hex map"></svg>
         </section>
@@ -91,11 +102,10 @@
             </label>
             <div class="actions">
                 <button class="primary" id="generateColors">Generate colors</button>
-                <button id="backToLayout" style="display:none">Back to layout</button>
             </div>
             <p class="hint" id="swapHint" style="display:none">
-                Colors generated. Click <b>exactly two land hexes</b> to swap them
-                (water hexes cannot be swapped). Click a selected hex again to deselect it.
+                Terrain colors are available. In terrain view, click <b>exactly two land hexes</b>
+                to swap them (water hexes cannot be swapped).
             </p>
             <div id="swapStatus"></div>
         </section>

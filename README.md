@@ -7,7 +7,7 @@ No dependencies, no build step, no server — open `index.html` in any browser.
 
 ## How to use
 
-1. Set **Width**, **Height** and **Form**, or pick a **Preset**.
+1. Set **Width**, **Height** and **Form**, or pick a **Preset**. Use the terrain icon next to the zoom controls to switch between the river layout and available terrain colors.
 2. Draw the river layout: click a hex to toggle **land / river**
    (or use *Random rivers* / *Reset rivers*).
 3. Pick an **Algorithm** and click **Generate colors**.
@@ -72,4 +72,3 @@ TM.colors.UNASSIGNED  // '???' — land hex not yet assigned
 TM.utils.pick(arr)    // random element
 TM.utils.shuffle(arr) // new shuffled copy (original unchanged)
 ```
-
