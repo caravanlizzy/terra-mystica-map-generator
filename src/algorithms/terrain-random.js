@@ -105,6 +105,8 @@
 			
 			let optcounts = [g.count(0),optavg,optavg,optavg,optavg,optavg,optavg,optavg];  // optimal envisioned number of terrains
 			
+			let reallyrunalgo = false; // toggle to false to only get some analysis data
+			
 			cells = []; adjsx = []; adjsy = []; adjcols = [];
 			// generate the field
 			for (let j = 0; j < grid.height; j++) {
@@ -112,8 +114,9 @@
 				clusterscan.push([]);
 				for (let i = 0; i < grid.rowWidth(j); i++) {
 					let col = 0;
-					if (g.get(i,j) != 0) col = 1 + rndint(7); // + rndint(7)
-					cells[j].push(col);
+					if (g.get(i,j) != 0) col = 1 + rndint(7);
+					if (reallyrunalgo) cells[j].push(col);
+					else cells[j].push(g.get(i,j));
 					clusterscan[j].push(0);
 				}
 			}
@@ -157,7 +160,7 @@
 			
 			
 			// now optimize
-			let noptsteps = 30000 * sizefactor * Math.max(1,sizefactor);
+			let noptsteps = (reallyrunalgo ? 30000 : 0) * sizefactor * Math.max(1,sizefactor);  // 30k is standard
 			for (let k = 0; k < noptsteps; k++) {
 				optimizecolor();
 				console.log("curenergy", curenergy);
