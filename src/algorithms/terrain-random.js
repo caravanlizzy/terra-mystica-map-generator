@@ -62,6 +62,7 @@
 			let adjcols = []; // list per cell of number of each adjacent color
 			let landcellsx = [];
 			let landcellsy = [];
+			let landdegrees = []; // number of land hex with given adjacency degree 0-6
 
 			let adjship1x = []; // for any given cell a list of all the other cells that are within ship1 reach
 			let adjship1y = [];
@@ -116,28 +117,33 @@
 					clusterscan[j].push(0);
 				}
 			}
+			// prepare neighdivs and landdegrees
+			for (let i = 0; i <= 6; i++) {
+				landdegrees[i] = 0;
+				neighdivs[i] = [];
+				for (let j = 0; j <= i; j++) {
+					neighdivs[i][j] = 0;
+				}
+			}
 			// calculate the neighbour geometry
 			for (let y = 0; y < g.height; y++) {
 				adjsx.push([]); adjsy.push([]);
 				for (let x = 0; x < g.rowWidth(y); x++) {				
 					adjsx[y].push([]); adjsy[y].push([]);
+					let nland = 0; // count land neighbors
 					for (let i = 0; i < 6; i++) {
 						let ncoord = g.neighbor(x,y,i);
 						let nx = ncoord[0], ny = ncoord[1];
 						if (g.outOfBounds(nx,ny)) continue;					
 						adjsx[y][x].push(nx);
 						adjsy[y][x].push(ny);
+						if (cells[ny][nx] != 0) nland++;
 					}
-				}
-			}
-			// prepare neighdivs
-			for (let i = 1; i <= 6; i++) {
-				neighdivs[i] = [];
-				for (let j = 0; j <= i; j++) {
-					neighdivs[i][j] = 0;
+					landdegrees[nland]++;
 				}
 			}
 			
+			console.log("landdegrees", landdegrees);
 			
 			
 			findland();
@@ -146,8 +152,12 @@
 			// first calculation of energy
 			curenergy = colorenergy();
 			
+			console.log(neighdivs);
+
+			
+			
 			// now optimize
-			let noptsteps = 30000 * sizefactor * Math.max(1,sizefactor);
+			let noptsteps = 1; //30000 * sizefactor * Math.max(1,sizefactor);
 			for (let k = 0; k < noptsteps; k++) {
 				optimizecolor();
 				console.log("curenergy", curenergy);
