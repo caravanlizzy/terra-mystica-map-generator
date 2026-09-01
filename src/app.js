@@ -252,14 +252,16 @@
     }
 
     function applyLayout(layout) {
+        const showTerrain = state.mode === 'colored';
         state.width = layout.width;
         state.height = layout.height;
         state.form = layout.form;
         state.water = layout.water instanceof Set
             ? new Set(layout.water)
             : new Set((layout.water || []).map(item => Array.isArray(item) ? key(item[0], item[1]) : String(item)));
-        enterEditMode(true, true);
+        enterEditMode(false, true);
         if (layout.terrain) state.grid = presetColorGrid(layout);
+        if (showTerrain && state.grid) state.mode = 'colored';
         $('width').value = state.width;
         $('height').value = state.height;
         $('form').value = state.form;
