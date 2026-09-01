@@ -157,7 +157,7 @@
 			
 			
 			// now optimize
-			let noptsteps = 1; //30000 * sizefactor * Math.max(1,sizefactor);
+			let noptsteps = 30000 * sizefactor * Math.max(1,sizefactor);
 			for (let k = 0; k < noptsteps; k++) {
 				optimizecolor();
 				console.log("curenergy", curenergy);
