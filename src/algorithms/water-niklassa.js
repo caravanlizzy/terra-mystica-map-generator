@@ -165,11 +165,14 @@
 		sum += 3 * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
 		
 		sum += 5 * landadjs[0];	// penalty for islands
-		sum += Math.max(landadjs[1] - 5 * sizefactor, 0);	// penalty for too many halfislands
-		sum += Math.max(landadjs[2] - 9 * sizefactor, 0);	// penalty for too many landbridges
-		sum += 5 * Math.max(2 * sizefactor - landadjs[5], 0); // penalty for too few coastal hex
-		sum += Math.max(landadjs[6] - 10 * sizefactor, 0);	// penalty for too many inland hex
-		sum += 5 * Math.max(3 * sizefactor - landadjs[6], 0);	// penalty for too few inland hex
+		sum += 2 * Math.abs(landadjs[1] - 3.5 * sizefactor);	// penalty for halfislands
+		sum += Math.abs(landadjs[2] - 19 * sizefactor);	// penalty for too many landbridges
+		sum += Math.abs(landadjs[3] - 28 * sizefactor);	// penalty for too many landbridges
+		sum += Math.abs(landadjs[4] - 47 * sizefactor);	// penalty for too many landbridges
+		sum += 2 * Math.abs(7 * sizefactor - landadjs[5]); // penalty for too few coastal hex
+//		sum += Math.max(landadjs[6] - 10 * sizefactor, 0);	// penalty for too many inland hex
+//		sum += 5 * Math.max(3 * sizefactor - landadjs[6], 0);	// penalty for too few inland hex
+		sum += 2 * Math.abs(landadjs[6] - 6  * sizefactor);
 		
 		for (let i = 0; i < 6; i++) {
 			if (waterclustern[i] > 0) sum += waterclustern[i]*5;  // penalizes water clusters below size 6?

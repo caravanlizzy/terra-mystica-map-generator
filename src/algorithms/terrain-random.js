@@ -35,6 +35,23 @@
  *   TM.utils.pick(array)          → element   random element
  *   TM.utils.shuffle(array)       → array     new shuffled copy (no mutation)
  */
+ 
+ 
+ /* some comparative data:
+ land degree sequences:
+	original:		[ 0, 3, 24, 26, 48, 6, 6 ]
+	fire and ice:	[ 0, 2, 18, 29, 51, 9, 3 ]
+	fjords:			[ 0, 5, 16, 29, 47, 4, 12 ]
+	loon lakes:		[ 0, 3, 16, 39, 30, 24, 0 ]
+	archipelago:	[ 0, 5, 25, 27, 39, 7, 10 ]
+	niklasrndm:		[ 0, 5, 15, 40, 37, 12, 4 ]
+					[ 0, 6, 9, 44, 45, 5, 4 ]
+					[ 0, 6, 17, 29, 47, 10, 4 ]
+					[ 0, 6, 12, 36, 48, 8, 3 ]
+					[ 0, 5, 15, 33, 50, 6, 4 ]
+ */
+ 
+ 
 (function (TM) {
     'use strict';
 
@@ -105,7 +122,7 @@
 			
 			let optcounts = [g.count(0),optavg,optavg,optavg,optavg,optavg,optavg,optavg];  // optimal envisioned number of terrains
 			
-			let reallyrunalgo = false; // toggle to false to only get some analysis data
+			let reallyrunalgo = true; // toggle to false to only get some analysis data
 			
 			cells = []; adjsx = []; adjsy = []; adjcols = [];
 			// generate the field
@@ -155,9 +172,6 @@
 			// first calculation of energy
 			curenergy = colorenergy();
 			
-			console.log(neighdivs);
-
-			
 			
 			// now optimize
 			let noptsteps = (reallyrunalgo ? 30000 : 0) * sizefactor * Math.max(1,sizefactor);  // 30k is standard
@@ -165,7 +179,7 @@
 				optimizecolor();
 				console.log("curenergy", curenergy);
 			}		
-			console.log(neighdivs);
+			// console.log(neighdivs);
 			
 			// translating it back to the grid
 			
