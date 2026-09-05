@@ -482,7 +482,9 @@
 
         $('randomWater').onclick = () => {
             readDimensions();
-            const grid = new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
+			// niklas attacked his
+            // const grid = new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
+            const grid = state.grid ? state.grid : new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
             applyLayout(TM.layout.randomizeWater(grid, state.waterAlgorithmId));
         };
 

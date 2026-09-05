@@ -46,13 +46,13 @@
 		let clusterscan = [];	// temp variable that saves whether a hex has already been counted for cluster computations
 
 	function run(grid) {
-        const water = new Set();
+		let reallyrunalgo = false; // toggle to false to only get some analysis data
 
 		g = grid;
+				console.log(g);
 		
 		// have some compensation for target sizes in larger maps
 		sizefactor = g.nHexes() / 113.;
-		console.log("sizefactor: ", sizefactor);
 		
 		// set the actually optimal count of water
 		optcounts[0] = g.nHexes() - 7 * Math.round(g.nHexes() * (1 - 0.32) / 7.);		
@@ -64,6 +64,7 @@
 			clusterscan.push([]);
 			for (let i = 0; i < grid.rowWidth(j); i++) {
 				let col = (rndint(113) < 2*optcounts[0] ? 0 :1); // + rndint(7)
+				if (!reallyrunalgo) col = g.get(i,j);
 				cells[j].push(col);
 				clusterscan[j].push(0);
 			}
@@ -87,14 +88,19 @@
 		curenergy = waterenergy();
 		
 		// now optimize
-		for (let k = 0; k < 10000; k++) {
+		let nsteps = 10000 * sizefactor;
+		if (!reallyrunalgo) nsteps = 0;
+		for (let k = 0; k < nsteps; k++) {
 			optimizewater();
 			//console.log("curenergy", curenergy);
 		}		
 
+		console.log("landdegrees", landadjs, landadjs.reduce((a, b) => a + b, 0));
+
 
 
 		// translating it to string format (???)
+        const water = new Set();
 		for (let j = 0; j < grid.height; j++) {
 			for (let i = 0; i < grid.rowWidth(j); i++) {
 				if (cells[j][i] != 0) continue;
@@ -154,6 +160,7 @@
 		calcwaterclusters();
 		
 		let sum = 0;
+		let sf = sizefactor;
 		sum += 3 * Math.abs(colcounts[0] - optcounts[0]); // target number of water hex
 		sum += 2 * Math.max(waterborders - 6 * sizefactor, 0); // target number of water hex at border 
 		sum += 2 * wateradjborders;			// penalizes adjacent border water hexx
@@ -165,14 +172,20 @@
 		sum += 3 * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
 		
 		sum += 5 * landadjs[0];	// penalty for islands
-		sum += 2 * Math.abs(landadjs[1] - 3.5 * sizefactor);	// penalty for halfislands
-		sum += Math.abs(landadjs[2] - 19 * sizefactor);	// penalty for too many landbridges
-		sum += Math.abs(landadjs[3] - 28 * sizefactor);	// penalty for too many landbridges
-		sum += Math.abs(landadjs[4] - 47 * sizefactor);	// penalty for too many landbridges
-		sum += 2 * Math.abs(7 * sizefactor - landadjs[5]); // penalty for too few coastal hex
-//		sum += Math.max(landadjs[6] - 10 * sizefactor, 0);	// penalty for too many inland hex
-//		sum += 5 * Math.max(3 * sizefactor - landadjs[6], 0);	// penalty for too few inland hex
-		sum += 2 * Math.abs(landadjs[6] - 6  * sizefactor);
+		sum += 2 * Math.max(landadjs[1] - 5*sf, 2*sf - landadjs[1], 0);	// penalty for halfislands
+		sum += 1 * Math.max(landadjs[2] - 25*sf, 16*sf - landadjs[1], 0);	// penalty for halfislands
+		sum += 1 * Math.max(landadjs[3] - 35*sf, 25*sf - landadjs[1], 0);	// penalty for halfislands
+		sum += 1 * Math.max(landadjs[4] - 51*sf, 35*sf - landadjs[1], 0);	// penalty for halfislands
+		sum += 1 * Math.max(landadjs[5] - 12*sf, 5*sf - landadjs[1], 0);	// penalty for halfislands
+		sum += 1 * Math.max(landadjs[6] - 10*sf, 3*sf - landadjs[1], 0);	// penalty for halfislands
+
+		// sum += Math.abs(landadjs[2] - 19 * sizefactor);	// penalty for too many landbridges
+		// sum += Math.abs(landadjs[3] - 28 * sizefactor);	// penalty for too many landbridges
+		// sum += Math.abs(landadjs[4] - 47 * sizefactor);	// penalty for too many landbridges
+		// sum += 2 * Math.abs(7 * sizefactor - landadjs[5]); // penalty for too few coastal hex
+// //		sum += Math.max(landadjs[6] - 10 * sizefactor, 0);	// penalty for too many inland hex
+// //		sum += 5 * Math.max(3 * sizefactor - landadjs[6], 0);	// penalty for too few inland hex
+		// sum += 2 * Math.abs(landadjs[6] - 6  * sizefactor);
 		
 		for (let i = 0; i < 6; i++) {
 			if (waterclustern[i] > 0) sum += waterclustern[i]*5;  // penalizes water clusters below size 6?

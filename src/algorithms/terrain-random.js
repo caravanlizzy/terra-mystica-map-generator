@@ -122,7 +122,7 @@
 			
 			let optcounts = [g.count(0),optavg,optavg,optavg,optavg,optavg,optavg,optavg];  // optimal envisioned number of terrains
 			
-			let reallyrunalgo = true; // toggle to false to only get some analysis data
+			let reallyrunalgo = false; // toggle to false to only get some analysis data
 			
 			cells = []; adjsx = []; adjsy = []; adjcols = [];
 			// generate the field
@@ -146,6 +146,7 @@
 				}
 			}
 			// calculate the neighbour geometry
+			console.log("test", cells);
 			for (let y = 0; y < g.height; y++) {
 				adjsx.push([]); adjsy.push([]);
 				for (let x = 0; x < g.rowWidth(y); x++) {				
