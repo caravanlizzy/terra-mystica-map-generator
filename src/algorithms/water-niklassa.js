@@ -3,7 +3,7 @@
  *
  * A water-target algorithm is a plain object:
  *
- *   { id, name, label, target: 'water', description, run(grid) }
+ *   { id, name, label, target: 'water', description, inputs, run(grid, inputs) }
  *
  * `run` receives a MapGrid, assigns grid.water (a Set of "x,y" strings) and
  * returns the grid. It is picked up automatically by the water select in the
@@ -21,7 +21,7 @@
 		return Math.floor(Math.random() * max);
 	}
 
-	function WaterNiklassa() {
+	function WaterNiklassa(inputs) {
 		// ######################### variables we need while running the algorithm and dont want to pass around the whole time
 		let cells = [];		// terrain information as 2d array
 		let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
@@ -55,7 +55,7 @@
 		sizefactor = g.nHexes() / 113.;
 		
 		// set the actually optimal count of water
-		optcounts[0] = g.nHexes() - 7 * Math.round(g.nHexes() * (1 - 0.32) / 7.);		
+		optcounts[0] = g.nHexes() - 7 * Math.round(g.nHexes() * (1 - inputs.waterRatio) / 7.);
 
 		cells = []; adjsx = []; adjsy = []; adjcols = [];
 		// generate the field
@@ -88,8 +88,7 @@
 		curenergy = waterenergy();
 		
 		// now optimize
-		let nsteps = 10000 * sizefactor;
-		if (!reallyrunalgo) nsteps = 0;
+		let nsteps = reallyrunalgo ? inputs.iterations * sizefactor : 0;
 		for (let k = 0; k < nsteps; k++) {
 			optimizewater();
 			//console.log("curenergy", curenergy);
@@ -332,6 +331,10 @@
         label: 'Niklassa Water',
         target: 'water',
         description: 'Simulated-annealing water generator that grows rivers and lakes while penalising isolated hexes, oversized oceans and border clumps.',
-        run: function (grid) { return new WaterNiklassa().run(grid); }
+        inputs: [
+            { key: 'waterRatio', label: 'Water coverage', min: 0.05, max: 0.6, step: 0.01, value: 0.32 },
+            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 20000, step: 1000, value: 0 }
+        ],
+        run: function (grid, inputs) { return new WaterNiklassa(inputs).run(grid); }
     });
 })(window.TM = window.TM || {});

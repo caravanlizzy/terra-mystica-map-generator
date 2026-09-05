@@ -38,11 +38,11 @@
 
     // Run the chosen water algorithm (by id); falls back to the first registered
     // one. Returns the grid unchanged if no water algorithm is registered.
-    function randomizeWater(grid, algorithmId) {
+    function randomizeWater(grid, algorithmId, inputs) {
         const algorithms = waterAlgorithms();
         const algorithm = algorithms.find(a => a.id === algorithmId) || algorithms[0];
         if (algorithm && typeof algorithm.run === 'function') {
-            return algorithm.run(grid);
+            return algorithm.run(grid, TM.resolveAlgorithmInputs(algorithm, inputs));
         }
         return grid;
     }

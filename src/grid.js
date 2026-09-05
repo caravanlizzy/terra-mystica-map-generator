@@ -8,6 +8,18 @@
     const { WATER, UNASSIGNED, isWater } = TM.terrain;
     const { rowWidth, outOfBounds, nextHex } = TM.hexGrid;
 
+    // Supply every declared algorithm input, using its configured default when
+    // the caller has not provided a finite numeric value.
+    function resolveAlgorithmInputs(algorithm, inputOverrides) {
+        const providedInputOverrides = inputOverrides || {};
+        return (algorithm.inputs || []).reduce((resolved, input) => {
+            resolved[input.key] = Number.isFinite(providedInputOverrides[input.key])
+                ? providedInputOverrides[input.key]
+                : input.value;
+            return resolved;
+        }, {});
+    }
+
     class MapGrid {
         // layout: { width, height, form, water? }, water being [x, y] pairs
         // or "x,y" strings.
@@ -123,9 +135,9 @@
         }
 
         // Fill the grid with a terrain algorithm.
-        generate(algorithm) {
+        generate(algorithm, inputs) {
             this.reset();
-            algorithm.fill(this);
+            algorithm.fill(this, resolveAlgorithmInputs(algorithm, inputs));
             return this;
         }
     }
@@ -139,5 +151,5 @@
 
     TM.MapGrid = MapGrid;
     TM.totalHexes = totalHexes;
+    TM.resolveAlgorithmInputs = resolveAlgorithmInputs;
 })(window.TM = window.TM || {});
-

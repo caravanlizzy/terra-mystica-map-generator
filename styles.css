@@ -211,6 +211,33 @@ main {
     width: 100%;
 }
 
+.algorithm-inputs {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.algorithm-input {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 10px;
+    align-items: center;
+}
+
+.algorithm-input input[type=range] {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin: 0;
+}
+
+.algorithm-input output {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: #555;
+}
+
 .field-row {
     display: flex;
     gap: 10px;

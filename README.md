@@ -25,7 +25,7 @@ src/
   utils.js          # pick(array), shuffle(array)
   grid.js           # MapGrid: cell storage, neighborhood, exports
   water-layouts.js        # river presets + random river generator
-  algorithms.js     # terrain algorithms (add yours here)
+  algorithms/       # terrain and water algorithms
   renderer.js       # renders hexes to SVG
   app.js            # controller: state, controls, swap, exports
 ```
@@ -35,14 +35,19 @@ Scripts are listed in `index.html` in dependency order.
 
 ## Adding an algorithm
 
-An algorithm is a plain object in the `TM.algorithms` array in `algorithms.js`:
+An algorithm registers a plain object in the shared `TM.algorithms` array. Its
+`inputs` list is the complete control interface: the app automatically renders
+one slider per item and passes the current values to `fill` or `run`.
 
 ```js
 {
     id:          'my-algo',        // unique string key
     label:       'My algorithm',   // shown in the Algorithm dropdown
     description: 'One sentence.', // shown as a tooltip
-    fill(grid) {
+    inputs: [
+        { key: 'iterations', label: 'Optimisation steps', min: 0, max: 30000, step: 1000, value: 10000 }
+    ],
+    fill(grid, { iterations }) {
         // Assign a terrain color to every land hex.
         const { TERRAINS } = TM.colors;
         const { pick } = TM.utils;
@@ -52,6 +57,14 @@ An algorithm is a plain object in the `TM.algorithms` array in `algorithms.js`:
     }
 }
 ```
+
+Each input needs a unique `key`, UI `label`, `min`, `max`, and default `value`;
+`step` is optional and defaults to `1`. The app and algorithm dispatchers
+resolve omitted values from this list, so declared keys are always available in
+the `inputs` object. Algorithms should read configurable values directly from
+that object (for example, `inputs.iterations`), rather than defining separate
+local defaults. Water algorithms use the same declaration and receive the
+values as `run(grid, inputs)`.
 
 ### MapGrid API inside `fill`
 
