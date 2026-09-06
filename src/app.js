@@ -597,6 +597,8 @@
         renderCurrent();
     }
 
+    TM.app = { renderCurrent };
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
