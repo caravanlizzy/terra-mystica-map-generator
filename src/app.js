@@ -7,19 +7,15 @@
 (function (TM) {
     'use strict';
 
-    const { WATER } = TM.terrain;
+    const { WATER, UNASSIGNED } = TM.terrain;
     const { displayColor } = TM.colors;
 
     const svg = document.getElementById('map');
     const $ = (id) => document.getElementById(id);
 
     const state = {
-        width: 13,
-        height: 9,
-        form: 0,
-        water: new Set(),    // "x,y" of water hexes (edit mode)
         mode: 'edit',        // 'edit' | 'colored'
-        grid: null,          // TM.MapGrid instance for a colored view
+        grid: new TM.MapGrid({ width: 13, height: 9, form: 0 }),
         selected: [],        // [[x, y], ...] land hexes picked for a swap
         algorithmId: null,   // the terrain algorithm chosen in the header
         waterAlgorithmId: null, // the water algorithm chosen in the map editor
@@ -34,28 +30,44 @@
 
     const WHEEL_RADIUS = 35;   // terrain wheel: distance from center, in %
 
-    const key = (x, y) => x + ',' + y;
+    function restoreUiPreferences() {
+        const saved = TM.storage.loadUiPreferences();
+        if (!saved) return;
+
+        $('width').value = saved.width !== null ? saved.width : state.grid.width;
+        $('height').value = saved.height !== null ? saved.height : state.grid.height;
+        $('form').value = saved.form;
+        state.grid = new TM.MapGrid(readDimensions());
+        state.algorithmId = saved.algorithmId;
+        state.waterAlgorithmId = saved.waterAlgorithmId;
+        state.algorithmInputs = saved.algorithmInputs;
+        state.waterAlgorithmInputs = saved.waterAlgorithmInputs;
+        $('continueWater').checked = saved.continueWater;
+    }
+
+    function saveUiPreferences() {
+        TM.storage.saveUiPreferences({
+            width: state.grid.width,
+            height: state.grid.height,
+            form: state.grid.form,
+            algorithmId: state.algorithmId,
+            waterAlgorithmId: state.waterAlgorithmId,
+            algorithmInputs: state.algorithmInputs,
+            waterAlgorithmInputs: state.waterAlgorithmInputs,
+            continueWater: $('continueWater').checked
+        });
+    }
+
     /* ---------- rendering ---------- */
 
     function isSingleWater(x, y) {
-        if (state.mode === 'colored' && state.grid) {
-            if (!state.grid.isWaterAt(x, y)) return false;
-            const neighbors = state.grid.neighbors(x, y);
-            return !neighbors.some(([nx, ny]) => state.grid.isWaterAt(nx, ny));
-        } else {
-            if (!state.water.has(key(x, y))) return false;
-            for (let dir = 0; dir < 6; dir++) {
-                const [nx, ny] = TM.hexGrid.nextHex(x, y, dir, state.form);
-                if (!TM.hexGrid.outOfBounds(nx, ny, state.width, state.height, state.form)) {
-                    if (state.water.has(key(nx, ny))) return false;
-                }
-            }
-            return true;
-        }
+        if (!state.grid.isWaterAt(x, y)) return false;
+        return !state.grid.neighbors(x, y)
+            .some(([nx, ny]) => state.grid.isWaterAt(nx, ny));
     }
 
     function editCell(x, y) {
-        const isWater = state.water.has(key(x, y));
+        const isWater = state.grid.isWaterAt(x, y);
         return {
             fill: '#ffffff',
             stroke: '#222',
@@ -79,12 +91,10 @@
     }
 
     function onEditClick(x, y) {
-        state.grid = null;
         state.selected = [];
         $('preset').value = '';
-        const k = key(x, y);
-        if (state.water.has(k)) state.water.delete(k);
-        else state.water.add(k);
+        if (hasTerrain()) state.grid.resetLand();
+        state.grid.set(x, y, state.grid.isWaterAt(x, y) ? UNASSIGNED : WATER);
         renderCurrent();
     }
 
@@ -114,11 +124,11 @@
     }
 
     function renderCurrent() {
-        const colored = state.mode === 'colored' && state.grid;
+        const colored = state.mode === 'colored';
         state.lastSize = TM.renderer.render(svg, {
-            width: state.width,
-            height: state.height,
-            form: state.form,
+            width: state.grid.width,
+            height: state.grid.height,
+            form: state.grid.form,
             cellFor: colored ? coloredCell : editCell,
             onClick: colored ? onColoredClick : onEditClick
         });
@@ -178,37 +188,43 @@
     /* ---------- stats & mode UI ---------- */
 
     function updateStats() {
-        const total = TM.totalHexes(state.width, state.height, state.form);
-        $('statW').textContent = state.width;
-        $('statH').textContent = state.height;
-        $('statForm').textContent = state.form;
+        const total = state.grid.nHexes();
+        $('statW').textContent = state.grid.width;
+        $('statH').textContent = state.grid.height;
+        $('statForm').textContent = state.grid.form;
         $('statTotal').textContent = total;
-        $('statLand').textContent = total - state.water.size;
-        $('statWater').textContent = state.water.size;
+        $('statLand').textContent = total - state.grid.count(WATER);
+        $('statWater').textContent = state.grid.count(WATER);
+    }
+
+    function hasTerrain() {
+        return state.grid.landCoordinates()
+            .some(([x, y]) => state.grid.get(x, y) !== UNASSIGNED);
     }
 
     function updateModeUi() {
         const colored = state.mode === 'colored';
-        const hasTerrain = Boolean(state.grid);
-        $('editHint').style.display = hasTerrain ? 'none' : 'block';
-        $('swapHint').style.display = hasTerrain ? 'block' : 'none';
+        const terrainGenerated = hasTerrain();
+        $('editHint').style.display = terrainGenerated ? 'none' : 'block';
+        $('swapHint').style.display = terrainGenerated ? 'block' : 'none';
         // The BGA and snellman formats only exist once colors are generated.
         $('copyBga').disabled = !colored;
         $('copySnellman').disabled = !colored;
         $('exportSnellman').disabled = !colored;
         // Layout editing is only meaningful in edit mode.
         $('randomWater').disabled = colored;
+        $('continueWater').disabled = colored;
         $('resetWater').disabled = colored;
-        $('toggleTerrain').disabled = !state.grid;
+        $('toggleTerrain').disabled = !terrainGenerated;
         $('toggleTerrain').setAttribute('aria-pressed', String(colored));
         $('toggleTerrain').setAttribute('aria-label', colored ? 'Show river layout' : 'Show terrain colors');
         $('toggleTerrain').title = colored ? 'Show river layout' : 'Show terrain colors';
         $('generateColors').textContent = 'Generate colors';
-        $('exportHint').textContent = hasTerrain
+        $('exportHint').textContent = terrainGenerated
             ? 'Terrain colors are available. Switch to terrain view to export the terrain map, BGA or snellman format.'
             : 'Exporting the current layout. Generate colors to also export the terrain map, BGA and snellman formats.';
 
-        if (hasTerrain) {
+        if (terrainGenerated) {
             $('swapStatus').textContent = colored && state.selected.length === 1
                 ? 'One hex selected – click a second land hex to swap.'
                 : 'In terrain view, click two land hexes to swap them.';
@@ -220,63 +236,72 @@
     /* ---------- reading the controls ---------- */
 
     function readDimensions() {
-        state.width = Math.max(1, Math.min(40, +$('width').value || 13));
-        state.height = Math.max(1, Math.min(40, +$('height').value || 9));
-        state.form = +$('form').value === 1 ? 1 : 0;
-        $('width').value = state.width;
-        $('height').value = state.height;
+        const width = Math.max(1, Math.min(40, +$('width').value || 13));
+        const height = Math.max(1, Math.min(40, +$('height').value || 9));
+        const form = +$('form').value === 1 ? 1 : 0;
+        $('width').value = width;
+        $('height').value = height;
+        return { width, height, form };
     }
 
     /* ---------- actions ---------- */
 
-    function enterEditMode(clearPreset, clearColors) {
+    function enterEditMode(clearPreset) {
         state.mode = 'edit';
         state.selected = [];
-        if (clearColors) state.grid = null;
         if (clearPreset) {
             $('preset').value = '';
         }
     }
 
     function newEmptyMap() {
-        readDimensions();
-        state.water.clear();
-        enterEditMode(true, true);
+        state.grid = new TM.MapGrid(readDimensions());
+        enterEditMode(true);
         renderCurrent();
+        saveUiPreferences();
+    }
+
+    function restoreDefaults() {
+        TM.storage.clearUiPreferences();
+        window.location.reload();
     }
 
     // Every water hex back to land. Unlike "New empty map" this ignores the
     // width/height inputs, so a size typed but not applied stays unapplied.
     function resetWater() {
-        state.water.clear();
-        enterEditMode(true, true);
+        state.grid.reset();
+        enterEditMode(true);
         renderCurrent();
     }
 
     function applyLayout(layout) {
-        const showTerrain = state.mode === 'colored';
-        state.width = layout.width;
-        state.height = layout.height;
-        state.form = layout.form;
-        state.water = layout.water instanceof Set
-            ? new Set(layout.water)
-            : new Set((layout.water || []).map(item => Array.isArray(item) ? key(item[0], item[1]) : String(item)));
-        enterEditMode(false, true);
-        if (layout.terrain) state.grid = presetColorGrid(layout);
-        if (showTerrain && state.grid) state.mode = 'colored';
-        $('width').value = state.width;
-        $('height').value = state.height;
-        $('form').value = state.form;
+        state.grid = new TM.MapGrid(layout);
+        state.mode = hasTerrain() ? 'colored' : 'edit';
+        state.selected = [];
+        $('width').value = state.grid.width;
+        $('height').value = state.grid.height;
+        $('form').value = state.grid.form;
         renderCurrent();
+        saveUiPreferences();
     }
 
-    function currentLayout() {
-        return {
-            width: state.width,
-            height: state.height,
-            form: state.form,
-            water: [...state.water].map(k => k.split(',').map(Number))
-        };
+    function runWaterAlgorithm() {
+        const dimensions = readDimensions();
+        const continueFromCurrentLayout = $('continueWater').checked;
+        const grid = continueFromCurrentLayout
+            ? state.grid
+            : new TM.MapGrid(dimensions);
+        const algorithm = getSelectedWaterAlgorithm();
+        const inputs = inputValues(algorithm, state.waterAlgorithmInputs);
+        const layout = TM.layout.randomizeWater(
+            grid,
+            state.waterAlgorithmId,
+            inputs,
+            { cont: continueFromCurrentLayout ? 1 : 0 }
+        );
+        state.grid = layout;
+        enterEditMode(true);
+        renderCurrent();
     }
 
     function terrainAlgorithms() {
@@ -326,6 +351,7 @@
                 const nextValue = Number(slider.value);
                 values[input.key] = nextValue;
                 output.textContent = formatInputValue(input, nextValue);
+                saveUiPreferences();
             };
 
             field.append(caption, output, slider);
@@ -345,23 +371,12 @@
 
     function generateColors() {
         readDimensions();
-        const grid = new TM.MapGrid(currentLayout());
+        const grid = state.grid;
         const algorithm = getSelectedAlgorithm();
         grid.generate(algorithm, inputValues(algorithm, state.algorithmInputs));
-        state.grid = grid;
         state.selected = [];
         state.mode = 'colored';
         renderCurrent();
-    }
-
-    function presetColorGrid(layout) {
-        const grid = new TM.MapGrid(layout);
-        layout.terrain.forEach((row, y) => {
-            for (let x = 0; x < grid.rowWidth(y); x++) {
-                grid.set(x, y, row[x]);
-            }
-        });
-        return grid;
     }
 
     /* ---------- export helpers ---------- */
@@ -405,10 +420,6 @@
 
     function mapData() {
         return TM.export.toJson({
-            width: state.width,
-            height: state.height,
-            form: state.form,
-            water: state.water,
             mode: state.mode,
             grid: state.grid,
             algorithmId: state.algorithmId
@@ -444,7 +455,9 @@
             option.title = algorithm.description;
             select.appendChild(option);
         });
-        state.algorithmId = algorithms.length ? algorithms[0].id : null;
+        if (!algorithms.some(algorithm => algorithm.id === state.algorithmId)) {
+            state.algorithmId = algorithms.length ? algorithms[0].id : null;
+        }
         select.value = state.algorithmId || '';
         // Nothing to choose with one algorithm, but keep it visible.
         select.disabled = algorithms.length < 2;
@@ -462,7 +475,9 @@
             option.title = algorithm.description || '';
             select.appendChild(option);
         });
-        state.waterAlgorithmId = algorithms.length ? algorithms[0].id : null;
+        if (!algorithms.some(algorithm => algorithm.id === state.waterAlgorithmId)) {
+            state.waterAlgorithmId = algorithms.length ? algorithms[0].id : null;
+        }
         select.value = state.waterAlgorithmId || '';
         // Nothing to choose with one algorithm, but keep it visible.
         select.disabled = algorithms.length < 2;
@@ -474,6 +489,7 @@
         if (found) state.waterAlgorithmId = id;
         $('waterAlgorithm').value = state.waterAlgorithmId || '';
         renderAlgorithmInputs('waterAlgorithmInputs', getSelectedWaterAlgorithm(), state.waterAlgorithmInputs);
+        saveUiPreferences();
     }
 
     function describeSelectedAlgorithm() {
@@ -491,15 +507,18 @@
         renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs);
         // Switching on a colored map re-runs it, so the effect is visible at once.
         if (state.mode === 'colored') generateColors();
+        saveUiPreferences();
     }
 
     function init() {
+        restoreUiPreferences();
         fillPresetDropdown();
         fillAlgorithmDropdown();
         fillWaterAlgorithmDropdown();
         renderColorWheel();
 
         $('newMap').onclick = newEmptyMap;
+        $('restoreDefaults').onclick = restoreDefaults;
         $('generateColors').onclick = generateColors;
 
         $('preset').onchange = (event) => {
@@ -507,31 +526,34 @@
             if (layout) {
                 applyLayout(layout);
             } else {
-                enterEditMode(true, true);
+                enterEditMode(true);
                 renderCurrent();
             }
         };
 
         $('toggleTerrain').onclick = () => {
-            if (!state.grid) return;
+            if (!hasTerrain()) return;
             state.mode = state.mode === 'colored' ? 'edit' : 'colored';
             state.selected = [];
             renderCurrent();
         };
 
         $('form').onchange = () => {
-            readDimensions();
-            enterEditMode(true, true);
+            state.grid = new TM.MapGrid(readDimensions());
+            enterEditMode(true);
             renderCurrent();
+            saveUiPreferences();
         };
 
         // Redraw the map immediately as the size changes, without forcing the
         // input value back mid-typing (so the caret / partial entry is kept).
         const liveResize = () => {
-            state.width = Math.max(1, Math.min(40, +$('width').value || 13));
-            state.height = Math.max(1, Math.min(40, +$('height').value || 9));
-            enterEditMode(true, true);
+            const width = Math.max(1, Math.min(40, +$('width').value || 13));
+            const height = Math.max(1, Math.min(40, +$('height').value || 9));
+            state.grid = new TM.MapGrid({ width, height, form: state.grid.form });
+            enterEditMode(true);
             renderCurrent();
+            saveUiPreferences();
         };
         $('width').oninput = liveResize;
         $('height').oninput = liveResize;
@@ -542,18 +564,8 @@
 
         $('resetWater').onclick = resetWater;
 
-        $('randomWater').onclick = () => {
-            readDimensions();
-			// niklas attacked his
-            // const grid = new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
-            const grid = state.grid ? state.grid : new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
-            const algorithm = getSelectedWaterAlgorithm();
-            applyLayout(TM.layout.randomizeWater(
-                grid,
-                state.waterAlgorithmId,
-                inputValues(algorithm, state.waterAlgorithmInputs)
-            ));
-        };
+        $('randomWater').onclick = runWaterAlgorithm;
+        $('continueWater').onchange = saveUiPreferences;
 
         $('zoomIn').onclick = () => setZoom(state.zoom * 1.2);
         $('zoomOut').onclick = () => setZoom(state.zoom / 1.2);

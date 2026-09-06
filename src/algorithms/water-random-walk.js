@@ -5,8 +5,7 @@
  *
  *   { id, name, label, target: 'water', description, inputs, run(grid, inputs) }
  *
- * `run` receives a MapGrid, assigns grid.water (a Set of "x,y" strings) and
- * returns the grid. It is picked up automatically by the water select in the
+ * `run` receives and updates a MapGrid, then returns it. It is picked up automatically by the water select in the
  * UI because it registers itself in the shared TM.algorithms registry.
  *
  * This generator was lifted verbatim out of water-layouts.js
@@ -27,7 +26,7 @@
         const shortestWalk = Math.min(inputs.minWalkLength, inputs.maxWalkLength);
         const longestWalk = Math.max(inputs.minWalkLength, inputs.maxWalkLength);
         const target = Math.round(TM.totalHexes(grid.width, grid.height, grid.form) * inputs.waterRatio);
-        const water = new Set();
+        const water = new Set(grid.waterCoordinates().map(([x, y]) => x + ',' + y));
 
         let safety = target * 50 + 1000;
         while (water.size < target && safety-- > 0) {
@@ -45,8 +44,11 @@
             }
         }
 
-        grid.water = water;
         grid.reset();
+        water.forEach(coordinate => {
+            const [x, y] = coordinate.split(',').map(Number);
+            grid.set(x, y, 0);
+        });
         return grid;
     }
 

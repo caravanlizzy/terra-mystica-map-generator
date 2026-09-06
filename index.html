@@ -32,6 +32,7 @@
                 </select>
             </label>
             <button id="newMap">New empty map</button>
+            <button id="restoreDefaults" title="Restore all global defaults: map settings, algorithms, sliders, and Continue.">Restore all defaults</button>
 
             <div class="stats">
                 <div class="stat"><span>Width</span><b id="statW">13</b></div>
@@ -48,8 +49,7 @@
         <section class="panel step">
             <h2 class="panel-title">2. Water layout</h2>
             <p class="hint" id="editHint">
-                Pick a preset or generate random water, then <b>click any hex</b> to
-                toggle it between <b>land</b> and <b>water</b> &ndash; adjust as much as you like.
+                Generate a new layout or turn on Continue to refine the current one. Click hexes to edit.
             </p>
             <label>Preset
                 <select id="preset">
@@ -59,11 +59,17 @@
             <label title="Which algorithm generates the random water layout.">Water algorithm
                 <select id="waterAlgorithm"></select>
             </label>
-            <div id="waterAlgorithmInputs" class="algorithm-inputs" aria-live="polite"></div>
-            <div class="actions">
-                <button id="randomWater">Generate water</button>
-                <button id="resetWater" title="Turn every water hex back into land, keeping the current size and form.">Reset water</button>
+            <div class="water-actions" aria-label="Water layout actions">
+                <button class="primary" id="randomWater">Generate</button>
+                <label class="continue-toggle" title="When enabled, Generate refines the current water layout instead of starting a new one.">
+                    <span>Continue</span>
+                    <input id="continueWater" type="checkbox" role="switch">
+                    <span class="toggle-slider" aria-hidden="true"></span>
+                </label>
+                <button id="resetWater" class="reset-action" title="Turn every water hex back into land, keeping the current size and form.">Reset layout</button>
             </div>
+            <p class="water-settings-title">Generation settings</p>
+            <div id="waterAlgorithmInputs" class="algorithm-inputs" aria-live="polite"></div>
         </section>
     </aside>
 
@@ -158,6 +164,7 @@
 <script src="src/algorithms/water-random-walk.js"></script>
 <script src="src/export.js"></script>
 <script src="src/renderer.js"></script>
+<script src="src/storage.js"></script>
 <script src="src/app.js"></script>
 </body>
 </html>

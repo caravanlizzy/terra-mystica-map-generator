@@ -36,14 +36,14 @@
     }
 
     // Plain-object representation of the current app state, suitable for JSON
-    // serialisation. `state` must expose { width, height, form, water,
-    // mode, grid, algorithmId }.
+    // serialisation. `state` must expose { mode, grid, algorithmId }.
     function toJson(state) {
+        const { grid } = state;
         const data = {
-            width: state.width,
-            height: state.height,
-            form: state.form,
-            waterCoordinates: [...state.water].map(k => k.split(',').map(Number))
+            width: grid.width,
+            height: grid.height,
+            form: grid.form,
+            waterCoordinates: grid.waterCoordinates()
         };
         if (state.mode === 'colored' && state.grid) {
             data.colors = state.grid.toGrid();
@@ -56,4 +56,3 @@
 
     TM.export = { bgaFormat, snellmanFormat, toJson };
 })(window.TM = window.TM || {});
-
