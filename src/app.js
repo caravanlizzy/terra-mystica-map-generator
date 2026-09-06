@@ -30,6 +30,34 @@
 
     const WHEEL_RADIUS = 35;   // terrain wheel: distance from center, in %
 
+    function restoreUiPreferences() {
+        const saved = TM.storage.loadUiPreferences();
+        if (!saved) return;
+
+        $('width').value = saved.width !== null ? saved.width : state.grid.width;
+        $('height').value = saved.height !== null ? saved.height : state.grid.height;
+        $('form').value = saved.form;
+        state.grid = new TM.MapGrid(readDimensions());
+        state.algorithmId = saved.algorithmId;
+        state.waterAlgorithmId = saved.waterAlgorithmId;
+        state.algorithmInputs = saved.algorithmInputs;
+        state.waterAlgorithmInputs = saved.waterAlgorithmInputs;
+        $('continueWater').checked = saved.continueWater;
+    }
+
+    function saveUiPreferences() {
+        TM.storage.saveUiPreferences({
+            width: state.grid.width,
+            height: state.grid.height,
+            form: state.grid.form,
+            algorithmId: state.algorithmId,
+            waterAlgorithmId: state.waterAlgorithmId,
+            algorithmInputs: state.algorithmInputs,
+            waterAlgorithmInputs: state.waterAlgorithmInputs,
+            continueWater: $('continueWater').checked
+        });
+    }
+
     /* ---------- rendering ---------- */
 
     function isSingleWater(x, y) {
@@ -230,6 +258,12 @@
         state.grid = new TM.MapGrid(readDimensions());
         enterEditMode(true);
         renderCurrent();
+        saveUiPreferences();
+    }
+
+    function restoreDefaults() {
+        TM.storage.clearUiPreferences();
+        window.location.reload();
     }
 
     // Every water hex back to land. Unlike "New empty map" this ignores the
@@ -248,6 +282,7 @@
         $('height').value = state.grid.height;
         $('form').value = state.grid.form;
         renderCurrent();
+        saveUiPreferences();
     }
 
     function runWaterAlgorithm() {
@@ -316,6 +351,7 @@
                 const nextValue = Number(slider.value);
                 values[input.key] = nextValue;
                 output.textContent = formatInputValue(input, nextValue);
+                saveUiPreferences();
             };
 
             field.append(caption, output, slider);
@@ -419,7 +455,9 @@
             option.title = algorithm.description;
             select.appendChild(option);
         });
-        state.algorithmId = algorithms.length ? algorithms[0].id : null;
+        if (!algorithms.some(algorithm => algorithm.id === state.algorithmId)) {
+            state.algorithmId = algorithms.length ? algorithms[0].id : null;
+        }
         select.value = state.algorithmId || '';
         // Nothing to choose with one algorithm, but keep it visible.
         select.disabled = algorithms.length < 2;
@@ -437,7 +475,9 @@
             option.title = algorithm.description || '';
             select.appendChild(option);
         });
-        state.waterAlgorithmId = algorithms.length ? algorithms[0].id : null;
+        if (!algorithms.some(algorithm => algorithm.id === state.waterAlgorithmId)) {
+            state.waterAlgorithmId = algorithms.length ? algorithms[0].id : null;
+        }
         select.value = state.waterAlgorithmId || '';
         // Nothing to choose with one algorithm, but keep it visible.
         select.disabled = algorithms.length < 2;
@@ -449,6 +489,7 @@
         if (found) state.waterAlgorithmId = id;
         $('waterAlgorithm').value = state.waterAlgorithmId || '';
         renderAlgorithmInputs('waterAlgorithmInputs', getSelectedWaterAlgorithm(), state.waterAlgorithmInputs);
+        saveUiPreferences();
     }
 
     function describeSelectedAlgorithm() {
@@ -466,15 +507,18 @@
         renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs);
         // Switching on a colored map re-runs it, so the effect is visible at once.
         if (state.mode === 'colored') generateColors();
+        saveUiPreferences();
     }
 
     function init() {
+        restoreUiPreferences();
         fillPresetDropdown();
         fillAlgorithmDropdown();
         fillWaterAlgorithmDropdown();
         renderColorWheel();
 
         $('newMap').onclick = newEmptyMap;
+        $('restoreDefaults').onclick = restoreDefaults;
         $('generateColors').onclick = generateColors;
 
         $('preset').onchange = (event) => {
@@ -498,6 +542,7 @@
             state.grid = new TM.MapGrid(readDimensions());
             enterEditMode(true);
             renderCurrent();
+            saveUiPreferences();
         };
 
         // Redraw the map immediately as the size changes, without forcing the
@@ -508,6 +553,7 @@
             state.grid = new TM.MapGrid({ width, height, form: state.grid.form });
             enterEditMode(true);
             renderCurrent();
+            saveUiPreferences();
         };
         $('width').oninput = liveResize;
         $('height').oninput = liveResize;
@@ -519,6 +565,7 @@
         $('resetWater').onclick = resetWater;
 
         $('randomWater').onclick = runWaterAlgorithm;
+        $('continueWater').onchange = saveUiPreferences;
 
         $('zoomIn').onclick = () => setZoom(state.zoom * 1.2);
         $('zoomOut').onclick = () => setZoom(state.zoom / 1.2);
