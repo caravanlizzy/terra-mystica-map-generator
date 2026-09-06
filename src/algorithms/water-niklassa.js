@@ -98,11 +98,12 @@
 			optimizewater();
 			console.log("curenergy", curenergy);
 		}		
-		console.log("curenergy/waterenergy", curenergy, waterenergy());
-		console.log("landdegrees", landadjs, landadjs.reduce((a, b) => a + b, 0));
-		console.log("waterdegrees", wateradjs, wateradjs.reduce((a, b) => a + b, 0));
-		console.log("water/opti", colcounts[0], optcounts[0]);
-
+		console.log("cur energy/water energy", curenergy, waterenergy());	//its important to call waterenergy here so the rest of the numbers below are correct
+		console.log("land degrees", landadjs, landadjs.reduce((a, b) => a + b, 0));
+		console.log("water degrees", wateradjs, wateradjs.reduce((a, b) => a + b, 0));
+		console.log("water borders", waterborders);
+		console.log("water clusters", waterclustern, nwatercluster);
+		console.log("land clusters", landclustern, nlandcluster);
 
 		// translating it to string format (???)
         const water = new Set();
