@@ -69,7 +69,7 @@
 			clusterscan.push([]);
 			for (let i = 0; i < grid.rowWidth(j); i++) {
 				let col = (rndint(113) < 2*optcounts[0] ? 0 :1); // + rndint(7)
-				if (!reallyrunalgo) col = parseInt(g.get(i,j));
+				if (inputs.cont == 1) col = parseInt(g.get(i,j));
 				cells[j].push(col);
 				clusterscan[j].push(0);
 			}
@@ -114,7 +114,7 @@
 			}
 		}
         grid.water = water;
-        grid.reset();
+        //grid.reset();
 
         return grid;
 	}
@@ -150,9 +150,6 @@
 		
 		sum += 5. * Math.abs(colcounts[0] - optcounts[0]); // target number of water hex
 		
-		//sum += 2. * Math.max(waterborders - 6 * sizefactor, 0); // target number of water hex at border 
-		sum += 2. * Math.max(waterborders - 7*Math.sqrt(sf), 4*Math.sqrt(sf) - waterborders, 0);	// penalty for riverends
-		sum += 2. * wateradjborders;			// penalizes adjacent border water hexx
 		
 		sum += 3. * wateradjs[0];	// penalty for ponds
 		sum += 2. * Math.max(wateradjs[1] - 8*sf, 3*sf - wateradjs[1], 0);	// penalty for riverends
@@ -175,18 +172,17 @@
 			if (i < 5*Math.min(1,sf)) sum += 4 * landclustern[i];  // penalizes small land clusters
 			if (i > 24*Math.sqrt(sf)) sum += (i-24)*sf * landclustern[i];  // penalizes large land clusters
 		}
-		sum += 2. * Math.max(nlandcluster - 8*sf, 4*sf - nlandcluster, 0);	// penalty for too few or many land clusters	
+		sum += 4. * Math.max(nlandcluster - inputs.nLandClusterMax*sf, inputs.nLandClusterMin*sf - nlandcluster, 0);	// penalty for too few or many land clusters	
 
 		for (let i = 0; i < waterclustern.length; i++) {
 			if (!waterclustern[i]) continue;
 			if (i < 10*Math.min(1,sf)) sum += 5. * waterclustern[i];  // penalizes small water clusters
 		}
-		sum += 1. * Math.max(nwatercluster - 2*sf, 1*sf - nwatercluster, 0);	// penalty for too few or many water clusters	
+		sum += 3. * Math.max(nwatercluster - 2*sf, 1*sf - nwatercluster, 0);	// penalty for too few or many water clusters	
 
-		// for (let i = 0; i < 6; i++) {
-			// if (waterclustern[i] > 0) sum += waterclustern[i]*5;  // penalizes water clusters below size 6?
-		// }
-		// sum += 3*Math.max(nwatercluster - 1.25,0);  // penalty for too many water clusters?
+		sum += 2. * Math.max(waterborders - 7*Math.sqrt(sf), 4*Math.sqrt(sf) - waterborders, 0);	// penalty for riverends
+		sum += 2. * wateradjborders;			// penalizes adjacent border water hexx
+
 		
 		return sum;
 
@@ -378,7 +374,10 @@
         description: 'Simulated-annealing water generator that grows rivers and lakes while penalising isolated hexes, oversized oceans and border clumps.',
         inputs: [
             { key: 'waterRatio', label: 'Water coverage', min: 0.05, max: 0.6, step: 0.01, value: 0.32 },
-            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 20000, step: 1000, value: 0 }
+            { key: 'nLandClusterMin', label: 'Min #land cluster', min: 1, max: 16, step: 1, value: 4 },
+            { key: 'nLandClusterMax', label: 'Max #land cluster', min: 1, max: 16, step: 1, value: 8 },
+            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 20000, step: 100, value: 10000 },
+            { key: 'cont', label: 'Continue', min: 0, max: 1, step: 1, value: 0 }
         ],
         run: function (grid, inputs) { return new WaterNiklassa(inputs).run(grid); }
     });
