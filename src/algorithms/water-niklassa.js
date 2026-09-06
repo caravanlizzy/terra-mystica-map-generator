@@ -54,6 +54,7 @@
 		let reallyrunalgo = true; // toggle to false to only get some analysis data
 
 		g = grid;
+		console.log("grid obtained at water run",g);
 		
 		// have some compensation for target sizes in larger maps
 		sizefactor = g.nHexes() / 113.;
