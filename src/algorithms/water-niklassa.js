@@ -49,7 +49,7 @@
 		let nwatercluster = 0;
 		let clusterscan = [];	// temp variable that saves whether a hex has already been counted for cluster computations
 
-	function run(grid) {
+	async function run(grid) {
 		let reallyrunalgo = true; // toggle to false to only get some analysis data
 
 		g = grid;
@@ -96,7 +96,13 @@
 		let nsteps = reallyrunalgo ? inputs.iterations * sizefactor : 0;
 		for (let k = 0; k < nsteps; k++) {
 			optimizewater();
-			console.log("curenergy", curenergy);
+			if ((k + 1) % 100 === 0) {
+				// Publish this batch to the UI's live grid before redrawing it.
+				writeCellsToGrid(grid);
+				TM.app.renderCurrent();
+				// Let the browser paint the redraw before optimizing the next batch.
+				await new Promise(requestAnimationFrame);
+			}
 		}		
 		console.log("cur energy/water energy", curenergy, waterenergy());	//its important to call waterenergy here so the rest of the numbers below are correct
 		console.log("land degrees", landadjs, landadjs.reduce((a, b) => a + b, 0));
@@ -105,14 +111,18 @@
 		console.log("water clusters", waterclustern, nwatercluster);
 		console.log("land clusters", landclustern, nlandcluster);
 
-		// translating it to string format (???)
+		// Publish the final partial batch when nsteps is not divisible by 100.
+		writeCellsToGrid(grid);
+
+        return grid;
+	}
+
+	function writeCellsToGrid(grid) {
 		for (let j = 0; j < grid.height; j++) {
 			for (let i = 0; i < grid.rowWidth(j); i++) {
 				grid.set(i, j, cells[j][i] == 0 ? 0 : -1);
 			}
 		}
-
-        return grid;
 	}
 
 	function optimizewater() {

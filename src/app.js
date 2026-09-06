@@ -285,7 +285,7 @@
         saveUiPreferences();
     }
 
-    function runWaterAlgorithm() {
+    async function runWaterAlgorithm() {
         const dimensions = readDimensions();
         const continueFromCurrentLayout = $('continueWater').checked;
         const grid = continueFromCurrentLayout
@@ -293,14 +293,17 @@
             : new TM.MapGrid(dimensions);
         const algorithm = getSelectedWaterAlgorithm();
         const inputs = inputValues(algorithm, state.waterAlgorithmInputs);
-        const layout = TM.layout.randomizeWater(
+        // Make the working grid current before the algorithm can yield and
+        // request a redraw through TM.app.renderCurrent().
+        state.grid = grid;
+        enterEditMode(true);
+        const layout = await TM.layout.randomizeWater(
             grid,
             state.waterAlgorithmId,
             inputs,
             { cont: continueFromCurrentLayout ? 1 : 0 }
         );
         state.grid = layout;
-        enterEditMode(true);
         renderCurrent();
     }
 

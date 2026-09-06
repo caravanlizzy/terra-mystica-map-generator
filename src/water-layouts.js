@@ -37,11 +37,13 @@
 
     // Run the chosen water algorithm (by id); falls back to the first registered
     // one. Returns the grid unchanged if no water algorithm is registered.
-    function randomizeWater(grid, algorithmId, inputs, runOptions) {
+    async function randomizeWater(grid, algorithmId, inputs, runOptions) {
         const algorithms = waterAlgorithms();
         const algorithm = algorithms.find(a => a.id === algorithmId) || algorithms[0];
         if (algorithm && typeof algorithm.run === 'function') {
-            return algorithm.run(
+            // Awaiting also supports synchronous algorithms, whose return value
+            // is automatically wrapped in a resolved promise.
+            return await algorithm.run(
                 grid,
                 Object.assign(TM.resolveAlgorithmInputs(algorithm, inputs), runOptions || {})
             );
