@@ -14,6 +14,11 @@
  * by the inner functions of a WaterNiklassa instance, so the helper functions
  * can share it without passing it around the whole time.
  */
+ 
+ 
+
+ 
+ 
 (function (TM) {
     'use strict';
 
@@ -46,16 +51,16 @@
 		let clusterscan = [];	// temp variable that saves whether a hex has already been counted for cluster computations
 
 	function run(grid) {
-		let reallyrunalgo = false; // toggle to false to only get some analysis data
+		let reallyrunalgo = true; // toggle to false to only get some analysis data
 
 		g = grid;
-				console.log(g);
 		
 		// have some compensation for target sizes in larger maps
 		sizefactor = g.nHexes() / 113.;
 		
 		// set the actually optimal count of water
-		optcounts[0] = g.nHexes() - 7 * Math.round(g.nHexes() * (1 - 0.32) / 7.);		
+		optcounts[0] = g.nHexes() - 7 * Math.round(g.nHexes() * (1 - 0.32) / 7.);
+		console.log("optnland", g.nHexes() - optcounts[0]);		
 
 		cells = []; adjsx = []; adjsy = []; adjcols = [];
 		// generate the field
@@ -64,7 +69,7 @@
 			clusterscan.push([]);
 			for (let i = 0; i < grid.rowWidth(j); i++) {
 				let col = (rndint(113) < 2*optcounts[0] ? 0 :1); // + rndint(7)
-				if (!reallyrunalgo) col = g.get(i,j);
+				if (!reallyrunalgo) col = parseInt(g.get(i,j));
 				cells[j].push(col);
 				clusterscan[j].push(0);
 			}
@@ -92,11 +97,12 @@
 		if (!reallyrunalgo) nsteps = 0;
 		for (let k = 0; k < nsteps; k++) {
 			optimizewater();
-			//console.log("curenergy", curenergy);
+			console.log("curenergy", curenergy);
 		}		
-
+		console.log("curenergy/waterenergy", curenergy, waterenergy());
 		console.log("landdegrees", landadjs, landadjs.reduce((a, b) => a + b, 0));
-
+		console.log("waterdegrees", wateradjs, wateradjs.reduce((a, b) => a + b, 0));
+		console.log("water/opti", colcounts[0], optcounts[0]);
 
 
 		// translating it to string format (???)
@@ -118,6 +124,69 @@
 		swaprandomwater()
 	}
 	
+ 
+	 /* preset data
+	 
+		landdegrees
+		original:	[ 0, 3, 18, 21, 23, 6, 6 ] 77
+		fire ice:	[ 0, 2, 18, 19, 26, 9, 3 ] 77
+		fjords:		[ 0, 5, 14, 21, 24, 4, 12 ] 80
+		loonlakes:	[ 0, 3, 13, 30, 18, 13, 0 ] 77
+		archipel:	[ 0, 5, 19, 14, 22, 7, 10 ] 77
+		waterdegrees
+		original:	[ 0, 4, 25, 4, 3, 0, 0 ] 36
+		fire ice: 	[ 0, 7, 23, 5, 0, 0, 0 ] 35
+		fjords:		[ 0, 3, 25, 5, 0, 0, 0 ] 33
+		loonlakes:	[ 0, 14, 15, 6, 0, 0, 0 ] 35
+	 */
+
+	function waterenergy() {
+		precalc();
+		calcwaterfails();
+		calcwaterclusters();
+		
+		let sum = 0.;
+		let sf = sizefactor;
+		sum += 5. * Math.abs(colcounts[0] - optcounts[0]); // target number of water hex
+		sum += 2. * Math.max(waterborders - 6 * sizefactor, 0); // target number of water hex at border 
+		sum += 2. * wateradjborders;			// penalizes adjacent border water hexx
+		sum += 3. * wateradjs[0]; // penalty for isolated water hex		
+		sum += 2. * Math.max(wateradjs[1] - 1.5 * sizefactor, 0);	// penalty for having too many "river ends"
+		
+		
+		
+		sum += Math.max(wateradjs[3] - 3.5 * sizefactor, 0); 	// penalty for too many river crossings
+		sum += Math.max(wateradjs[4] - 0.5 * sizefactor, 0);	// penalty for too many "fords"
+		sum += 2. * Math.max(wateradjs[5] - (sizefactor - 1),0);		// penalty for any almost ocean tiles
+		sum += 3. * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
+		
+		sum += 5. * landadjs[0];	// penalty for islands
+		sum += 2. * Math.max(landadjs[1] - 5*sf, 2*sf - landadjs[1], 0);	// penalty for halfislands
+		sum += 1. * Math.max(landadjs[2] - 18*sf, 14*sf - landadjs[2], 0);	// penalty for landbridges
+		sum += 1. * Math.max(landadjs[3] - 28*sf, 15*sf - landadjs[3], 0);	// penalty for beaches
+		sum += 1. * Math.max(landadjs[4] - 25*sf, 19*sf - landadjs[4], 0);	// penalty for coast
+		sum += 1. * Math.max(landadjs[5] - 10*sf, 5*sf - landadjs[5], 0);	// penalty for bays
+		sum += 1. * Math.max(landadjs[6] - 9*sf, 3*sf - landadjs[6], 0);	// penalty for inland
+
+		// sum += Math.abs(landadjs[2] - 19 * sizefactor);	// penalty for too many landbridges
+		// sum += Math.abs(landadjs[3] - 28 * sizefactor);	// penalty for too many landbridges
+		// sum += Math.abs(landadjs[4] - 47 * sizefactor);	// penalty for too many landbridges
+		// sum += 2 * Math.abs(7 * sizefactor - landadjs[5]); // penalty for too few coastal hex
+// //		sum += Math.max(landadjs[6] - 10 * sizefactor, 0);	// penalty for too many inland hex
+// //		sum += 5 * Math.max(3 * sizefactor - landadjs[6], 0);	// penalty for too few inland hex
+		// sum += 2 * Math.abs(landadjs[6] - 6  * sizefactor);
+		
+		for (let i = 0; i < 6; i++) {
+			if (waterclustern[i] > 0) sum += waterclustern[i]*5;  // penalizes water clusters below size 6?
+		}
+		for (let i = 0; i < 4; i++) {
+			if (landclustern[i] > 0) sum += landclustern[i]*5;  // penalizes small land clusters?
+		}
+		sum += 3*Math.max(nwatercluster - 1.25,0);  // penalty for too many water clusters?
+		
+		return sum;
+	}	
+
 	function precalc() { // do somewhat unified pre calculations for energy:
 		// // centers
 		// for (let k = 0; k < ncols; k++) { // cx = 5.79, cy = 4
@@ -139,7 +208,7 @@
 				// color adjacencies
 				let ncol = [0,0,0,0,0,0,0,0];
 				for (let i = 0; i < adjsx[y][x].length; i++) {
-					ncol[cells[adjsy[y][x][i] ][adjsx[y][x][i] ]]++;
+					ncol[cells[adjsy[y][x][i] ][adjsx[y][x][i] ] ]++;
 				}
 				adjcols[y][x] = ncol.slice();
 				//if (adjsx[y][x].length < 6) ncolorborder[c]++;
@@ -153,51 +222,6 @@
 			// centersy[k] = (centersy[k] / colcounts[k]) - 4; 
 		// }	
 	}
-
-	function waterenergy() {
-		precalc();
-		calcwaterfails();
-		calcwaterclusters();
-		
-		let sum = 0;
-		let sf = sizefactor;
-		sum += 3 * Math.abs(colcounts[0] - optcounts[0]); // target number of water hex
-		sum += 2 * Math.max(waterborders - 6 * sizefactor, 0); // target number of water hex at border 
-		sum += 2 * wateradjborders;			// penalizes adjacent border water hexx
-		sum += 3 * wateradjs[0]; // penalty for isolated water hex		
-		sum += 2 * Math.max(wateradjs[1] - 1.5 * sizefactor, 0);	// penalty for having too many "river ends"
-		sum += Math.max(wateradjs[3] - 3.5 * sizefactor, 0); 	// penalty for too many river crossings
-		sum += Math.max(wateradjs[4] - 0.5 * sizefactor, 0);	// penalty for too many "fords"
-		sum += 2 * Math.max(wateradjs[5] - (sizefactor - 1),0);		// penalty for any almost ocean tiles
-		sum += 3 * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
-		
-		sum += 5 * landadjs[0];	// penalty for islands
-		sum += 2 * Math.max(landadjs[1] - 5*sf, 2*sf - landadjs[1], 0);	// penalty for halfislands
-		sum += 1 * Math.max(landadjs[2] - 25*sf, 16*sf - landadjs[1], 0);	// penalty for halfislands
-		sum += 1 * Math.max(landadjs[3] - 35*sf, 25*sf - landadjs[1], 0);	// penalty for halfislands
-		sum += 1 * Math.max(landadjs[4] - 51*sf, 35*sf - landadjs[1], 0);	// penalty for halfislands
-		sum += 1 * Math.max(landadjs[5] - 12*sf, 5*sf - landadjs[1], 0);	// penalty for halfislands
-		sum += 1 * Math.max(landadjs[6] - 10*sf, 3*sf - landadjs[1], 0);	// penalty for halfislands
-
-		// sum += Math.abs(landadjs[2] - 19 * sizefactor);	// penalty for too many landbridges
-		// sum += Math.abs(landadjs[3] - 28 * sizefactor);	// penalty for too many landbridges
-		// sum += Math.abs(landadjs[4] - 47 * sizefactor);	// penalty for too many landbridges
-		// sum += 2 * Math.abs(7 * sizefactor - landadjs[5]); // penalty for too few coastal hex
-// //		sum += Math.max(landadjs[6] - 10 * sizefactor, 0);	// penalty for too many inland hex
-// //		sum += 5 * Math.max(3 * sizefactor - landadjs[6], 0);	// penalty for too few inland hex
-		// sum += 2 * Math.abs(landadjs[6] - 6  * sizefactor);
-		
-		for (let i = 0; i < 6; i++) {
-			if (waterclustern[i] > 0) sum += waterclustern[i]*5;  // penalizes water clusters below size 6?
-		}
-		for (let i = 0; i < 4; i++) {
-			if (landclustern[i] > 0) sum += landclustern[i]*5;  // penalizes small land clusters?
-		}
-		sum += 3*Math.max(nwatercluster - 1.25,0);  // penalty for too many water clusters?
-		
-		return sum + Math.random()*2;
-	}	
-
 	
 	function calcwaterfails() {
 		landadjs = [0,0,0,0,0,0,0];
@@ -215,12 +239,13 @@
 	function calcwaterfailscell(x, y) {
 		let nn = adjsx[y][x].length; // number of neighbor hexs
 		let nw = adjcols[y][x][0]; // number of water neighbors
+		wateradjs[nw]++;
 		if (nn < 6) { // on the border
 			waterborders += 1;
 			if (nn < 3) wateradjborders += 3; // in the corner is also bad
 			if (nw != 1) wateradjborders++;		
 		} else {
-			wateradjs[nw]++;
+//			wateradjs[nw]++;
 		}
 	}
 	function calclandfailscell(x, y) {
@@ -288,7 +313,7 @@
 		
 		let newenergy = waterenergy();
 		
-		if (newenergy + (Math.random()-.5) >= curenergy) { // need to change back, old stuff won
+		if (newenergy > curenergy) { // need to change back, old stuff won + (Math.random()-.5)
 			cells[y][x] = c;
 		} else {
 			curenergy = newenergy; // keep the new energy
@@ -311,7 +336,7 @@
 		
 		let newenergy = waterenergy();
 		
-		if (newenergy + (Math.random()-.5) >= curenergy) { // need to change back, old stuff won
+		if (newenergy > curenergy) { // need to change back, old stuff won + (Math.random()-.5)
 			cells[y1][x1] = c1; cells[y2][x2] = c2;
 		} else {
 			curenergy = newenergy; // keep the new energy

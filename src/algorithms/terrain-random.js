@@ -122,7 +122,7 @@
 			
 			let optcounts = [g.count(0),optavg,optavg,optavg,optavg,optavg,optavg,optavg];  // optimal envisioned number of terrains
 			
-			let reallyrunalgo = false; // toggle to false to only get some analysis data
+			let reallyrunalgo = true; // toggle to false to only get some analysis data
 			
 			cells = []; adjsx = []; adjsy = []; adjcols = [];
 			// generate the field
@@ -160,7 +160,7 @@
 						adjsy[y][x].push(ny);
 						if (cells[ny][nx] != 0) nland++;
 					}
-					landdegrees[nland]++;
+					if (cells[y][x] != 0) landdegrees[nland]++;
 				}
 			}
 			
