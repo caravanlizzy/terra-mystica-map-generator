@@ -27,7 +27,7 @@
             this.width = layout.width;
             this.height = layout.height;
             this.form = layout.form;
-            this.cells = {}; // "x,y" -> cell value
+            this.cells = [];
             this.reset();
             (layout.cells || []).forEach((row, y) => {
                 row.forEach((value, x) => {
@@ -35,9 +35,6 @@
                 });
             });
         }
-
-        static key(x, y) { return x + ',' + y; }
-        static parseKey(key) { return key.split(',').map(Number); }
 
         /* ---------------- shape ---------------- */
 
@@ -58,18 +55,18 @@
 
         /* ---------------- cells ---------------- */
 
-        get(x, y) { return this.cells[MapGrid.key(x, y)]; }
-        set(x, y, value) { this.cells[MapGrid.key(x, y)] = value; }
+        get(x, y) { return this.cells[y][x]; }
+        set(x, y, value) { this.cells[y][x] = value; }
 
         // Value at (x, y), or '' when off the board.
         at(x, y) { return this.outOfBounds(x, y) ? '' : this.get(x, y); }
 
         // Clear every cell to unassigned land.
         reset() {
-            this.cells = {};
-            this.forEachCoordinate((x, y) => {
-                this.set(x, y, UNASSIGNED);
-            });
+            this.cells = [];
+            for (let y = 0; y < this.height; y++) {
+                this.cells.push(Array(this.rowWidth(y)).fill(UNASSIGNED));
+            }
         }
 
         // Remove terrain assignments while retaining the current water layout.
@@ -120,7 +117,11 @@
         // Hexes currently carrying `value`.
         count(value) {
             let total = 0;
-            for (const key in this.cells) if (this.cells[key] === value) total++;
+            this.cells.forEach(row => {
+                row.forEach(cell => {
+                    if (cell === value) total++;
+                });
+            });
             return total;
         }
 
@@ -137,20 +138,14 @@
 
         /* ---------------- copying ---------------- */
 
-        snapshot() { return Object.assign({}, this.cells); }
-        restore(snapshot) { this.cells = Object.assign({}, snapshot); }
+        snapshot() { return this.cells.map(row => row.slice()); }
+        restore(snapshot) { this.cells = snapshot.map(row => row.slice()); }
 
         /* ---------------- exports ---------------- */
 
         // 2D array of cell values, row by row (rows vary in length).
         toGrid() {
-            const rows = [];
-            for (let y = 0; y < this.height; y++) {
-                const row = [];
-                for (let x = 0; x < this.rowWidth(y); x++) row.push(this.get(x, y));
-                rows.push(row);
-            }
-            return rows;
+            return this.cells.map(row => row.slice());
         }
 
         // Fill the grid with a terrain algorithm.
