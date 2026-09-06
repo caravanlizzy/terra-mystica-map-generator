@@ -68,7 +68,10 @@
         label: 'Random colors',
         target: 'terrain',
         description: 'Every land hex gets a uniformly random terrain color, independent of its neighbors.',
-        fill(grid) {
+        inputs: [
+            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 30000, step: 1000, value: 0 }
+        ],
+        fill(grid, inputs) {
 			// ######################### variables we need while running the algorithm and dont want to pass around the whole time
 			let g = grid; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
 			let sizefactor = g.nHexes() / 113.;;
@@ -123,7 +126,7 @@
 			let optcounts = [g.count(0),optavg,optavg,optavg,optavg,optavg,optavg,optavg];  // optimal envisioned number of terrains
 			
 			let reallyrunalgo = true; // toggle to false to only get some analysis data
-			
+
 			cells = []; adjsx = []; adjsy = []; adjcols = [];
 			// generate the field
 			for (let j = 0; j < grid.height; j++) {
@@ -175,7 +178,7 @@
 			
 			
 			// now optimize
-			let noptsteps = (reallyrunalgo ? 30000 : 0) * sizefactor * Math.max(1,sizefactor);  // 30k is standard
+			let noptsteps = (reallyrunalgo ? inputs.iterations : 0) * sizefactor * Math.max(1, sizefactor);
 			for (let k = 0; k < noptsteps; k++) {
 				optimizecolor();
 				console.log("curenergy", curenergy);

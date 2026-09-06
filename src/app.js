@@ -23,6 +23,8 @@
         selected: [],        // [[x, y], ...] land hexes picked for a swap
         algorithmId: null,   // the terrain algorithm chosen in the header
         waterAlgorithmId: null, // the water algorithm chosen in the map editor
+        algorithmInputs: {}, // { algorithmId: { inputKey: value } }
+        waterAlgorithmInputs: {}, // { algorithmId: { inputKey: value } }
         zoom: 1,             // display scale for the rendered map
         lastSize: null       // intrinsic canvas size from the last render
     };
@@ -281,15 +283,71 @@
         return TM.algorithms.filter(a => a.target === 'terrain');
     }
 
+    function inputDefinitions(algorithm) {
+        return algorithm && Array.isArray(algorithm.inputs) ? algorithm.inputs : [];
+    }
+
+    function inputValues(algorithm, valuesByAlgorithm) {
+        return TM.resolveAlgorithmInputs(algorithm, valuesByAlgorithm[algorithm.id]);
+    }
+
+    function formatInputValue(input, value) {
+        const decimals = String(input.step || '').split('.')[1];
+        return decimals ? value.toFixed(decimals.length) : String(value);
+    }
+
+    function renderAlgorithmInputs(containerId, algorithm, valuesByAlgorithm) {
+        const container = $(containerId);
+        container.textContent = '';
+        if (!algorithm) return;
+
+        const values = valuesByAlgorithm[algorithm.id] || (valuesByAlgorithm[algorithm.id] = {});
+        inputDefinitions(algorithm).forEach((input, index) => {
+            const value = Number.isFinite(values[input.key]) ? values[input.key] : input.value;
+            values[input.key] = value;
+
+            const field = document.createElement('label');
+            field.className = 'algorithm-input';
+            const caption = document.createElement('span');
+            caption.textContent = input.label;
+
+            const slider = document.createElement('input');
+            slider.type = 'range';
+            slider.id = containerId + '-' + algorithm.id + '-' + index;
+            slider.min = input.min;
+            slider.max = input.max;
+            slider.step = input.step || 1;
+            slider.value = value;
+
+            const output = document.createElement('output');
+            output.htmlFor = slider.id;
+            output.textContent = formatInputValue(input, value);
+            slider.oninput = () => {
+                const nextValue = Number(slider.value);
+                values[input.key] = nextValue;
+                output.textContent = formatInputValue(input, nextValue);
+            };
+
+            field.append(caption, output, slider);
+            container.appendChild(field);
+        });
+    }
+
     function getSelectedAlgorithm() {
         const terrain = terrainAlgorithms();
         return terrain.find(a => a.id === state.algorithmId) || terrain[0];
     }
 
+    function getSelectedWaterAlgorithm() {
+        const water = TM.layout.waterAlgorithms();
+        return water.find(a => a.id === state.waterAlgorithmId) || water[0];
+    }
+
     function generateColors() {
         readDimensions();
         const grid = new TM.MapGrid(currentLayout());
-        grid.generate(getSelectedAlgorithm());
+        const algorithm = getSelectedAlgorithm();
+        grid.generate(algorithm, inputValues(algorithm, state.algorithmInputs));
         state.grid = grid;
         state.selected = [];
         state.mode = 'colored';
@@ -391,6 +449,7 @@
         // Nothing to choose with one algorithm, but keep it visible.
         select.disabled = algorithms.length < 2;
         describeSelectedAlgorithm();
+        renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs);
     }
 
     function fillWaterAlgorithmDropdown() {
@@ -407,12 +466,14 @@
         select.value = state.waterAlgorithmId || '';
         // Nothing to choose with one algorithm, but keep it visible.
         select.disabled = algorithms.length < 2;
+        renderAlgorithmInputs('waterAlgorithmInputs', getSelectedWaterAlgorithm(), state.waterAlgorithmInputs);
     }
 
     function selectWaterAlgorithm(id) {
         const found = TM.layout.waterAlgorithms().find(a => a.id === id);
         if (found) state.waterAlgorithmId = id;
         $('waterAlgorithm').value = state.waterAlgorithmId || '';
+        renderAlgorithmInputs('waterAlgorithmInputs', getSelectedWaterAlgorithm(), state.waterAlgorithmInputs);
     }
 
     function describeSelectedAlgorithm() {
@@ -427,6 +488,7 @@
         if (found) state.algorithmId = id;
         $('algorithm').value = state.algorithmId || '';
         describeSelectedAlgorithm();
+        renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs);
         // Switching on a colored map re-runs it, so the effect is visible at once.
         if (state.mode === 'colored') generateColors();
     }
@@ -485,7 +547,12 @@
 			// niklas attacked his
             // const grid = new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
             const grid = state.grid ? state.grid : new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
-            applyLayout(TM.layout.randomizeWater(grid, state.waterAlgorithmId));
+            const algorithm = getSelectedWaterAlgorithm();
+            applyLayout(TM.layout.randomizeWater(
+                grid,
+                state.waterAlgorithmId,
+                inputValues(algorithm, state.waterAlgorithmInputs)
+            ));
         };
 
         $('zoomIn').onclick = () => setZoom(state.zoom * 1.2);
