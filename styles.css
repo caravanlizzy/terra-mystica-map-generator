@@ -332,10 +332,10 @@ main {
 }
 
 .continue-toggle {
-    grid-column: 1 / -1;
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     color: #333;
     cursor: pointer;
@@ -402,13 +402,6 @@ main {
 .water-actions .reset-action:hover:not(:disabled) {
     background: #fff3f3;
     border-color: #9d4d4d;
-}
-
-.water-actions-hint {
-    margin: 8px 0 0;
-    color: #666;
-    font-size: 11px;
-    line-height: 1.4;
 }
 
 .water-settings-title {
