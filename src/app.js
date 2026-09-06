@@ -198,6 +198,7 @@
         $('exportSnellman').disabled = !colored;
         // Layout editing is only meaningful in edit mode.
         $('randomWater').disabled = colored;
+        $('continueWater').disabled = colored;
         $('resetWater').disabled = colored;
         $('toggleTerrain').disabled = !state.grid;
         $('toggleTerrain').setAttribute('aria-pressed', String(colored));
@@ -277,6 +278,23 @@
             form: state.form,
             water: [...state.water].map(k => k.split(',').map(Number))
         };
+    }
+
+    function runWaterAlgorithm() {
+        readDimensions();
+        const continueFromCurrentLayout = $('continueWater').checked;
+        const grid = new TM.MapGrid(continueFromCurrentLayout
+            ? currentLayout()
+            : { width: state.width, height: state.height, form: state.form });
+        const algorithm = getSelectedWaterAlgorithm();
+        const inputs = inputValues(algorithm, state.waterAlgorithmInputs);
+        const layout = TM.layout.randomizeWater(
+            grid,
+            state.waterAlgorithmId,
+            inputs,
+            { cont: continueFromCurrentLayout ? 1 : 0 }
+        );
+        applyLayout(layout);
     }
 
     function terrainAlgorithms() {
@@ -542,18 +560,7 @@
 
         $('resetWater').onclick = resetWater;
 
-        $('randomWater').onclick = () => {
-            readDimensions();
-			// niklas attacked his
-            // const grid = new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
-            const grid = state.grid ? state.grid : new TM.MapGrid({ width: state.width, height: state.height, form: state.form });
-            const algorithm = getSelectedWaterAlgorithm();
-            applyLayout(TM.layout.randomizeWater(
-                grid,
-                state.waterAlgorithmId,
-                inputValues(algorithm, state.waterAlgorithmInputs)
-            ));
-        };
+        $('randomWater').onclick = runWaterAlgorithm;
 
         $('zoomIn').onclick = () => setZoom(state.zoom * 1.2);
         $('zoomOut').onclick = () => setZoom(state.zoom / 1.2);

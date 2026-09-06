@@ -376,8 +376,7 @@
             { key: 'waterRatio', label: 'Water coverage', min: 0.05, max: 0.6, step: 0.01, value: 0.32 },
             { key: 'nLandClusterMin', label: 'Min #land cluster', min: 1, max: 16, step: 1, value: 4 },
             { key: 'nLandClusterMax', label: 'Max #land cluster', min: 1, max: 16, step: 1, value: 8 },
-            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 20000, step: 100, value: 10000 },
-            { key: 'cont', label: 'Continue', min: 0, max: 1, step: 1, value: 0 }
+            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 20000, step: 100, value: 10000 }
         ],
         run: function (grid, inputs) { return new WaterNiklassa(inputs).run(grid); }
     });

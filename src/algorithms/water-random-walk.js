@@ -27,7 +27,7 @@
         const shortestWalk = Math.min(inputs.minWalkLength, inputs.maxWalkLength);
         const longestWalk = Math.max(inputs.minWalkLength, inputs.maxWalkLength);
         const target = Math.round(TM.totalHexes(grid.width, grid.height, grid.form) * inputs.waterRatio);
-        const water = new Set();
+        const water = new Set(grid.water);
 
         let safety = target * 50 + 1000;
         while (water.size < target && safety-- > 0) {

@@ -59,11 +59,18 @@
             <label title="Which algorithm generates the random water layout.">Water algorithm
                 <select id="waterAlgorithm"></select>
             </label>
-            <div id="waterAlgorithmInputs" class="algorithm-inputs" aria-live="polite"></div>
-            <div class="actions">
-                <button id="randomWater">Generate water</button>
-                <button id="resetWater" title="Turn every water hex back into land, keeping the current size and form.">Reset water</button>
+            <div class="water-actions" aria-label="Water layout actions">
+                <label class="continue-toggle" title="When enabled, Generate refines the current water layout instead of starting a new one.">
+                    <input id="continueWater" type="checkbox" role="switch">
+                    <span class="toggle-slider" aria-hidden="true"></span>
+                    Continue from current layout
+                </label>
+                <button class="primary" id="randomWater">Generate</button>
+                <button id="resetWater" class="reset-action" title="Turn every water hex back into land, keeping the current size and form.">Reset layout</button>
             </div>
+            <p class="water-actions-hint">Enable Continue to refine the current layout. Leave it off to generate a new layout.</p>
+            <p class="water-settings-title">Generation settings</p>
+            <div id="waterAlgorithmInputs" class="algorithm-inputs" aria-live="polite"></div>
         </section>
     </aside>
 
