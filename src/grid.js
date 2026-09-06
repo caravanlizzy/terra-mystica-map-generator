@@ -5,7 +5,7 @@
 (function (TM) {
     'use strict';
 
-    const { WATER, UNASSIGNED, isWater } = TM.terrain;
+    const { UNASSIGNED, isWater } = TM.terrain;
     const { rowWidth, outOfBounds, nextHex } = TM.hexGrid;
 
     // Supply every declared algorithm input, using its configured default when
@@ -21,16 +21,19 @@
     }
 
     class MapGrid {
-        // layout: { width, height, form, water? }, water being [x, y] pairs
-        // or "x,y" strings.
+        // layout: { width, height, form, cells? }, with cells as a row-by-row
+        // grid of numeric terrain values.
         constructor(layout) {
             this.width = layout.width;
             this.height = layout.height;
             this.form = layout.form;
-            this.water = new Set((layout.water || [])
-                .map(r => (Array.isArray(r) ? MapGrid.key(r[0], r[1]) : String(r))));
             this.cells = {}; // "x,y" -> cell value
             this.reset();
+            (layout.cells || []).forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (!this.outOfBounds(x, y)) this.set(x, y, value);
+                });
+            });
         }
 
         static key(x, y) { return x + ',' + y; }
@@ -61,11 +64,18 @@
         // Value at (x, y), or '' when off the board.
         at(x, y) { return this.outOfBounds(x, y) ? '' : this.get(x, y); }
 
-        // All hexes start UNASSIGNED; water hexes are initialised as WATER.
+        // Clear every cell to unassigned land.
         reset() {
             this.cells = {};
             this.forEachCoordinate((x, y) => {
-                this.set(x, y, this.water.has(MapGrid.key(x, y)) ? WATER : UNASSIGNED);
+                this.set(x, y, UNASSIGNED);
+            });
+        }
+
+        // Remove terrain assignments while retaining the current water layout.
+        resetLand() {
+            this.forEachCoordinate((x, y) => {
+                if (!this.isWaterAt(x, y)) this.set(x, y, UNASSIGNED);
             });
         }
 
@@ -116,6 +126,15 @@
 
         isWaterAt(x, y) { return isWater(this.at(x, y)); }
 
+        // Water coordinates derived from the canonical cell values.
+        waterCoordinates() {
+            const coordinates = [];
+            this.forEachCoordinate((x, y) => {
+                if (this.isWaterAt(x, y)) coordinates.push([x, y]);
+            });
+            return coordinates;
+        }
+
         /* ---------------- copying ---------------- */
 
         snapshot() { return Object.assign({}, this.cells); }
@@ -136,7 +155,7 @@
 
         // Fill the grid with a terrain algorithm.
         generate(algorithm, inputs) {
-            this.reset();
+            this.resetLand();
             algorithm.fill(this, resolveAlgorithmInputs(algorithm, inputs));
             return this;
         }

@@ -5,8 +5,7 @@
  *
  *   { id, name, label, target: 'water', description, inputs, run(grid, inputs) }
  *
- * `run` receives a MapGrid, assigns grid.water (a Set of "x,y" strings) and
- * returns the grid. It is picked up automatically by the water select in the
+ * `run` receives and updates a MapGrid, then returns it. It is picked up automatically by the water select in the
  * UI because it registers itself in the shared TM.algorithms registry.
  *
  * The whole simulated-annealing generator below was lifted verbatim out of
@@ -106,15 +105,11 @@
 		console.log("land clusters", landclustern, nlandcluster);
 
 		// translating it to string format (???)
-        const water = new Set();
 		for (let j = 0; j < grid.height; j++) {
 			for (let i = 0; i < grid.rowWidth(j); i++) {
-				if (cells[j][i] != 0) continue;
-				water.add(i + ',' + j);
+				grid.set(i, j, cells[j][i] == 0 ? 0 : -1);
 			}
 		}
-        grid.water = water;
-        //grid.reset();
 
         return grid;
 	}

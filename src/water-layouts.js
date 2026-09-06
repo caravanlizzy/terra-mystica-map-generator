@@ -1,8 +1,8 @@
 /*
  * Layout service: preset lookup and water-layout dispatch.
  * Preset data lives in layout-presets.js (TM.PRESETS).
- * A layout is { width, height, form, water, terrain }, water being [x, y]
- * pairs and terrain being an optional numeric MapGrid terrain map.
+ * A layout is { width, height, form, cells }, where cells is an optional
+ * row-by-row numeric MapGrid terrain map.
  *
  * The actual water generators are registered as water-target algorithms in the
  * algorithms folder (see src/algorithms/). randomizeWater() simply runs the one
@@ -26,8 +26,7 @@
             width: preset.width,
             height: preset.height,
             form: preset.form,
-            water: preset.water.map(([x, y]) => [x, y]),
-            terrain: preset.terrain ? preset.terrain.map(row => row.slice()) : null
+            cells: preset.cells ? preset.cells.map(row => row.slice()) : null
         };
     }
 
