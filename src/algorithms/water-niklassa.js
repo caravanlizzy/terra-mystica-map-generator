@@ -149,15 +149,23 @@
 		sum += 5. * Math.abs(colcounts[0] - optcounts[0]); // target number of water hex
 		sum += 2. * Math.max(waterborders - 6 * sizefactor, 0); // target number of water hex at border 
 		sum += 2. * wateradjborders;			// penalizes adjacent border water hexx
-		sum += 3. * wateradjs[0]; // penalty for isolated water hex		
-		sum += 2. * Math.max(wateradjs[1] - 1.5 * sizefactor, 0);	// penalty for having too many "river ends"
 		
-		
-		
-		sum += Math.max(wateradjs[3] - 3.5 * sizefactor, 0); 	// penalty for too many river crossings
-		sum += Math.max(wateradjs[4] - 0.5 * sizefactor, 0);	// penalty for too many "fords"
-		sum += 2. * Math.max(wateradjs[5] - (sizefactor - 1),0);		// penalty for any almost ocean tiles
-		sum += 3. * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
+		// sum += 3. * wateradjs[0]; // penalty for isolated water hex		
+		// sum += 2. * Math.max(wateradjs[1] - 1.5 * sizefactor, 0);	// penalty for having too many "river ends"
+		// sum += Math.max(wateradjs[3] - 3.5 * sizefactor, 0); 	// penalty for too many river crossings
+		// sum += Math.max(wateradjs[4] - 0.5 * sizefactor, 0);	// penalty for too many "fords"
+		// sum += 2. * Math.max(wateradjs[5] - (sizefactor - 1),0);		// penalty for any almost ocean tiles
+		// sum += 3. * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
+
+		sum += 3. * wateradjs[0];	// penalty for ponds
+		sum += 2. * Math.max(wateradjs[1] - 8*sf, 3*sf - wateradjs[1], 0);	// penalty for riverends
+		sum += 1. * Math.max(wateradjs[2] - 30*sf, 20*sf - wateradjs[2], 0);	// penalty for rivers
+		sum += 2. * Math.max(wateradjs[3] - 6*sf, 4*sf - wateradjs[3], 0);	// penalty for branches and large rivers
+		sum += 2. * Math.max(wateradjs[4] - 4*sf, 0*sf - wateradjs[4], 0);	// penalty for open water
+		sum += 2. * Math.max(wateradjs[5] - 0*sf, 0*sf - wateradjs[5], 0);	// penalty for 
+		sum += 3. * Math.max(wateradjs[6] - 0*sf, 0*sf - wateradjs[6], 0);	// penalty for ocean
+
+
 		
 		sum += 5. * landadjs[0];	// penalty for islands
 		sum += 2. * Math.max(landadjs[1] - 5*sf, 2*sf - landadjs[1], 0);	// penalty for halfislands
