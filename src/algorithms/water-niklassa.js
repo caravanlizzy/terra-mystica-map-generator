@@ -125,18 +125,18 @@
 	
  
 	 /* preset data
-	 
 		landdegrees
 		original:	[ 0, 3, 18, 21, 23, 6, 6 ] 77
 		fire ice:	[ 0, 2, 18, 19, 26, 9, 3 ] 77
 		fjords:		[ 0, 5, 14, 21, 24, 4, 12 ] 80
 		loonlakes:	[ 0, 3, 13, 30, 18, 13, 0 ] 77
 		archipel:	[ 0, 5, 19, 14, 22, 7, 10 ] 77
-		waterdegrees
-		original:	[ 0, 4, 25, 4, 3, 0, 0 ] 36
-		fire ice: 	[ 0, 7, 23, 5, 0, 0, 0 ] 35
-		fjords:		[ 0, 3, 25, 5, 0, 0, 0 ] 33
-		loonlakes:	[ 0, 14, 15, 6, 0, 0, 0 ] 35
+		waterdegrees (border)
+		original:	[ 0, 4, 25, 4, 3, 0, 0 ] 36 (4)
+		fire ice: 	[ 0, 7, 23, 5, 0, 0, 0 ] 35 (7)
+		fjords:		[ 0, 3, 25, 5, 0, 0, 0 ] 33 (5)
+		loonlakes:	[ 0, 14, 15, 6, 0, 0, 0 ] 35 (6)
+		archipel:	[ 0, 7, 14, 9, 6, 0, 0 ] 36 (7)
 	 */
 
 	function waterenergy() {
@@ -146,8 +146,11 @@
 		
 		let sum = 0.;
 		let sf = sizefactor;
+		
 		sum += 5. * Math.abs(colcounts[0] - optcounts[0]); // target number of water hex
-		sum += 2. * Math.max(waterborders - 6 * sizefactor, 0); // target number of water hex at border 
+		
+		//sum += 2. * Math.max(waterborders - 6 * sizefactor, 0); // target number of water hex at border 
+		sum += 2. * Math.max(waterborders - 7*Math.sqrt(sf), 4*Math.sqrt(sf) - waterborders, 0);	// penalty for riverends
 		sum += 2. * wateradjborders;			// penalizes adjacent border water hexx
 		
 		// sum += 3. * wateradjs[0]; // penalty for isolated water hex		
@@ -159,7 +162,7 @@
 
 		sum += 3. * wateradjs[0];	// penalty for ponds
 		sum += 2. * Math.max(wateradjs[1] - 8*sf, 3*sf - wateradjs[1], 0);	// penalty for riverends
-		sum += 1. * Math.max(wateradjs[2] - 30*sf, 20*sf - wateradjs[2], 0);	// penalty for rivers
+		sum += 1. * Math.max(wateradjs[2] - 28*sf, 16*sf - wateradjs[2], 0);	// penalty for rivers
 		sum += 2. * Math.max(wateradjs[3] - 6*sf, 4*sf - wateradjs[3], 0);	// penalty for branches and large rivers
 		sum += 2. * Math.max(wateradjs[4] - 4*sf, 0*sf - wateradjs[4], 0);	// penalty for open water
 		sum += 2. * Math.max(wateradjs[5] - 0*sf, 0*sf - wateradjs[5], 0);	// penalty for 
