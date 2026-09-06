@@ -126,18 +126,18 @@
 	
  
 	 /* preset data
-		landdegrees
-		original:	[ 0, 3, 18, 21, 23, 6, 6 ] 77
-		fire ice:	[ 0, 2, 18, 19, 26, 9, 3 ] 77
-		fjords:		[ 0, 5, 14, 21, 24, 4, 12 ] 80
-		loonlakes:	[ 0, 3, 13, 30, 18, 13, 0 ] 77
-		archipel:	[ 0, 5, 19, 14, 22, 7, 10 ] 77
-		waterdegrees (border)
-		original:	[ 0, 4, 25, 4, 3, 0, 0 ] 36 (4)
-		fire ice: 	[ 0, 7, 23, 5, 0, 0, 0 ] 35 (7)
-		fjords:		[ 0, 3, 25, 5, 0, 0, 0 ] 33 (5)
-		loonlakes:	[ 0, 14, 15, 6, 0, 0, 0 ] 35 (6)
-		archipel:	[ 0, 7, 14, 9, 6, 0, 0 ] 36 (7)
+		landdegrees / cluster
+		original:	[ 0, 3, 18, 21, 23, 6, 6 ] 77 / 16 19 20 22 = 4
+		fire ice:	[ 0, 2, 18, 19, 26, 9, 3 ] 77 / 7 10 11 11 14 24 = 6
+		fjords:		[ 0, 5, 14, 21, 24, 4, 12 ] 80 / 7 9 11 16 18 19 = 6
+		loonlakes:	[ 0, 3, 13, 30, 18, 13, 0 ] 77 / 77 = 1
+		archipel:	[ 0, 5, 19, 14, 22, 7, 10 ] 77 / 4 5 5 5 7 7 21 23 = 8
+		waterdegrees (border) / cluster
+		original:	[ 0, 4, 25, 4, 3, 0, 0 ] 36 (4) / 36 = 1
+		fire ice: 	[ 0, 7, 23, 5, 0, 0, 0 ] 35 (7) / 14 21 = 2
+		fjords:		[ 0, 3, 25, 5, 0, 0, 0 ] 33 (5) / 34 = 1
+		loonlakes:	[ 0, 14, 15, 6, 0, 0, 0 ] 35 (6) / 3 5 5 6 7 9 = 6
+		archipel:	[ 0, 7, 14, 9, 6, 0, 0 ] 36 (7) / 37 = 1
 	 */
 
 	function waterenergy() {
@@ -154,13 +154,6 @@
 		sum += 2. * Math.max(waterborders - 7*Math.sqrt(sf), 4*Math.sqrt(sf) - waterborders, 0);	// penalty for riverends
 		sum += 2. * wateradjborders;			// penalizes adjacent border water hexx
 		
-		// sum += 3. * wateradjs[0]; // penalty for isolated water hex		
-		// sum += 2. * Math.max(wateradjs[1] - 1.5 * sizefactor, 0);	// penalty for having too many "river ends"
-		// sum += Math.max(wateradjs[3] - 3.5 * sizefactor, 0); 	// penalty for too many river crossings
-		// sum += Math.max(wateradjs[4] - 0.5 * sizefactor, 0);	// penalty for too many "fords"
-		// sum += 2. * Math.max(wateradjs[5] - (sizefactor - 1),0);		// penalty for any almost ocean tiles
-		// sum += 3. * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
-
 		sum += 3. * wateradjs[0];	// penalty for ponds
 		sum += 2. * Math.max(wateradjs[1] - 8*sf, 3*sf - wateradjs[1], 0);	// penalty for riverends
 		sum += 1. * Math.max(wateradjs[2] - 28*sf, 16*sf - wateradjs[2], 0);	// penalty for rivers
@@ -168,8 +161,6 @@
 		sum += 2. * Math.max(wateradjs[4] - 4*sf, 0*sf - wateradjs[4], 0);	// penalty for open water
 		sum += 2. * Math.max(wateradjs[5] - 0*sf, 0*sf - wateradjs[5], 0);	// penalty for 
 		sum += 3. * Math.max(wateradjs[6] - 0*sf, 0*sf - wateradjs[6], 0);	// penalty for ocean
-
-
 		
 		sum += 5. * landadjs[0];	// penalty for islands
 		sum += 2. * Math.max(landadjs[1] - 5*sf, 2*sf - landadjs[1], 0);	// penalty for halfislands
@@ -179,6 +170,26 @@
 		sum += 1. * Math.max(landadjs[5] - 10*sf, 5*sf - landadjs[5], 0);	// penalty for bays
 		sum += 1. * Math.max(landadjs[6] - 9*sf, 3*sf - landadjs[6], 0);	// penalty for inland
 
+		for (let i = 0; i < landclustern.length; i++) {
+			if (!landclustern[i]) continue;
+			if (i < 5*Math.min(1,sf)) sum += 4 * landclustern[i];  // penalizes small land clusters
+			if (i > 24*Math.sqrt(sf)) sum += (i-24)*sf * landclustern[i];  // penalizes large land clusters
+		}
+		sum += 2. * Math.max(nlandcluster - 8*sf, 4*sf - nlandcluster, 0);	// penalty for too few or many land clusters	
+
+		for (let i = 0; i < waterclustern.length; i++) {
+			if (!waterclustern[i]) continue;
+			if (i < 10*Math.min(1,sf)) sum += 5. * waterclustern[i];  // penalizes small water clusters
+		}
+		sum += 1. * Math.max(nwatercluster - 2*sf, 1*sf - nwatercluster, 0);	// penalty for too few or many water clusters	
+
+		// for (let i = 0; i < 6; i++) {
+			// if (waterclustern[i] > 0) sum += waterclustern[i]*5;  // penalizes water clusters below size 6?
+		// }
+		// sum += 3*Math.max(nwatercluster - 1.25,0);  // penalty for too many water clusters?
+		
+		return sum;
+
 		// sum += Math.abs(landadjs[2] - 19 * sizefactor);	// penalty for too many landbridges
 		// sum += Math.abs(landadjs[3] - 28 * sizefactor);	// penalty for too many landbridges
 		// sum += Math.abs(landadjs[4] - 47 * sizefactor);	// penalty for too many landbridges
@@ -186,16 +197,13 @@
 // //		sum += Math.max(landadjs[6] - 10 * sizefactor, 0);	// penalty for too many inland hex
 // //		sum += 5 * Math.max(3 * sizefactor - landadjs[6], 0);	// penalty for too few inland hex
 		// sum += 2 * Math.abs(landadjs[6] - 6  * sizefactor);
-		
-		for (let i = 0; i < 6; i++) {
-			if (waterclustern[i] > 0) sum += waterclustern[i]*5;  // penalizes water clusters below size 6?
-		}
-		for (let i = 0; i < 4; i++) {
-			if (landclustern[i] > 0) sum += landclustern[i]*5;  // penalizes small land clusters?
-		}
-		sum += 3*Math.max(nwatercluster - 1.25,0);  // penalty for too many water clusters?
-		
-		return sum;
+
+		// sum += 3. * wateradjs[0]; // penalty for isolated water hex		
+		// sum += 2. * Math.max(wateradjs[1] - 1.5 * sizefactor, 0);	// penalty for having too many "river ends"
+		// sum += Math.max(wateradjs[3] - 3.5 * sizefactor, 0); 	// penalty for too many river crossings
+		// sum += Math.max(wateradjs[4] - 0.5 * sizefactor, 0);	// penalty for too many "fords"
+		// sum += 2. * Math.max(wateradjs[5] - (sizefactor - 1),0);		// penalty for any almost ocean tiles
+		// sum += 3. * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
 	}	
 
 	function precalc() { // do somewhat unified pre calculations for energy:
