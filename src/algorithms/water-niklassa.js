@@ -54,6 +54,7 @@
 
 		g = grid;
 		//console.log("grid obtained at water run",g);
+		console.log("inputs", inputs);
 		
 		// have some compensation for target sizes in larger maps
 		sizefactor = g.nHexes() / 113.;
@@ -69,11 +70,14 @@
 			clusterscan.push([]);
 			for (let i = 0; i < grid.rowWidth(j); i++) {
 				let col = (rndint(113) < 2*optcounts[0] ? 0 :1); // + rndint(7)
-				if (inputs.cont == 1) col = parseInt(g.get(i,j));
+				if (inputs.cont == 1) {
+					col = parseInt(g.get(i,j));
+				}
 				cells[j].push(col);
 				clusterscan[j].push(0);
 			}
 		}
+		
 		// calculate the neighbour geometry
 		for (let y = 0; y < g.height; y++) {
 			adjsx.push([]); adjsy.push([]);
@@ -313,7 +317,7 @@
 		let s = size;
 		let c = cells[y][x];
 		if ((c == 0) && (wland == 1)) return s;
-		if ((c > 0) && (wland == 0)) return s;
+		if ((c != 0) && (wland == 0)) return s;
 		clusterscan[y][x] = 1; // scanned this
 		s++;
 		
