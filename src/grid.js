@@ -150,7 +150,7 @@
 
         // Fill the grid with a terrain algorithm.
         generate(algorithm, inputs) {
-            this.resetLand();
+            //this.resetLand();
             algorithm.fill(this, resolveAlgorithmInputs(algorithm, inputs));
             return this;
         }

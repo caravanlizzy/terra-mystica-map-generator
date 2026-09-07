@@ -69,12 +69,14 @@
         target: 'terrain',
         description: 'Every land hex gets a uniformly random terrain color, independent of its neighbors.',
         inputs: [
-            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 30000, step: 1000, value: 0 }
+            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 30000, step: 1000, value: 0 },
+            { key: 'cont', label: 'continue', min: 0, max: 1, step: 1, value: 0 }
         ],
         fill(grid, inputs) {
 			// ######################### variables we need while running the algorithm and dont want to pass around the whole time
 			let g = grid; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
-			let sizefactor = g.nHexes() / 113.;;
+			console.log("grid test", g);
+			let sizefactor = g.nHexes() / 113.;
 
 			let cells = [];		// terrain information as 2d array		
 			let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
@@ -134,9 +136,11 @@
 				clusterscan.push([]);
 				for (let i = 0; i < grid.rowWidth(j); i++) {
 					let col = 0;
-					if (g.get(i,j) != 0) col = 1 + rndint(7);
-					if (reallyrunalgo) cells[j].push(col);
-					else cells[j].push(g.get(i,j));
+					if (inputs.cont == 0) {
+						if (g.get(i,j) != 0) col = 1 + rndint(7);
+					} else {
+						cells[j].push(g.get(i,j));
+					}
 					clusterscan[j].push(0);
 				}
 			}
@@ -192,11 +196,6 @@
             }
 			
 			// ############# function storage below, totally professional
-			
-			function optimizecolor() {
-				updaterandomcolor();
-				swaprandomcolor();					
-			}
 
 
 			function colorenergy() {
@@ -210,11 +209,16 @@
 
 				let sum = 0;
 				
+				// optimal number of colors
 				for (let i = 1; i < 8; i++) {
-					sum += 3 * Math.abs(colcounts[i] - optcounts[i]);		// incentivizes optimal color count
+					sum += 5. * Math.abs(colcounts[i] - optcounts[i]);
 				}
+				
+				
+				
 				sum += 3 * adjfails; // penalizes same colors being adjacent
 				sum	+= 8 * neighfails; // penalizes hexes that have one color three times as neighbor
+				
 				// neighbourhood diversity fails:
 				sum += neighdivs[3][2];
 				sum += 3 * neighdivs[4][2] + neighdivs[4][3];
@@ -230,7 +234,12 @@
 				
 				return sum;// + rnd()*2;
 			}
-
+			
+			function optimizecolor() {
+				updaterandomcolor();
+				swaprandomcolor();					
+			}
+			
 			function precalc() { // do somewhat unified pre calculations for energy:
 				// centers
 				for (let k = 0; k < 8; k++) {

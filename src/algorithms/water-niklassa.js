@@ -53,13 +53,13 @@
 		let reallyrunalgo = true; // toggle to false to only get some analysis data
 
 		g = grid;
-		console.log("grid obtained at water run",g);
+		//console.log("grid obtained at water run",g);
 		
 		// have some compensation for target sizes in larger maps
 		sizefactor = g.nHexes() / 113.;
 		
 		// set the actually optimal count of water
-		console.log("optnland", g.nHexes() - optcounts[0]);		
+		//console.log("optnland", g.nHexes() - optcounts[0]);		
 		optcounts[0] = g.nHexes() - 7 * Math.round(g.nHexes() * (1 - inputs.waterRatio) / 7.);
 
 		cells = []; adjsx = []; adjsy = []; adjcols = [];
@@ -184,7 +184,7 @@
 			if (!waterclustern[i]) continue;
 			if (i < 10*Math.min(1,sf)) sum += 5. * waterclustern[i];  // penalizes small water clusters
 		}
-		sum += 3. * Math.max(nwatercluster - 2*sf, 1*sf - nwatercluster, 0);	// penalty for too few or many water clusters	
+		sum += 4. * Math.max(nwatercluster - 2*sf, 1*sf - nwatercluster, 0);	// penalty for too few or many water clusters	
 
 		sum += 2. * Math.max(waterborders - 7*Math.sqrt(sf), 4*Math.sqrt(sf) - waterborders, 0);	// penalty for riverends
 		sum += 2. * wateradjborders;			// penalizes adjacent border water hexx
