@@ -183,7 +183,7 @@
 			let noptsteps = inputs.iterations * sizefactor * Math.max(1, sizefactor);
 			for (let k = 0; k < noptsteps; k++) {
 				optimizecolor();
-				console.log("energy:", curenergy);
+				//console.log("energy:", curenergy);
 			}		
 
 
@@ -192,7 +192,7 @@
 				return arr.map(r => r.map((v, i) => String(v).padEnd(w[i])).join(" | ")).join("\n");
 			};
 			console.log("######### land algo report ##########");
-			console.log("cur energy/water energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
+			console.log("cur energy/color energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
 			console.log("land degrees", landdegrees, landdegrees.reduce((a, b) => a + b, 0));
 			console.log("neigh diversities\n", toTable(neighdivs));
 			// console.log("water degrees", wateradjs, wateradjs.reduce((a, b) => a + b, 0));
@@ -208,6 +208,37 @@
 			
 			// ############# function storage below, totally professional
 
+			// neigh diversity 
+			// 0 | 3	// original
+			// 0 | 0 | 18
+			// 0 | 0 | 1 | 20
+			// 0 | 0 | 1 | 5 | 17
+			// 0 | 0 | 0 | 0 | 2 | 4
+			// 0 | 0 | 0 | 0 | 4 | 2 | 0
+			// 0 | 2 //fire and ice
+			// 0 | 0 | 18	
+			// 0 | 0 | 2 | 17
+			// 0 | 0 | 0 | 14 | 12
+			// 0 | 0 | 0 | 0 | 4 | 5
+			// 0 | 0 | 0 | 0 | 0 | 3 | 0
+			// 0 | 5	// fjords
+			// 0 | 0 | 14
+			// 0 | 0 | 2 | 19
+			// 0 | 0 | 0 | 4 | 20
+			// 0 | 0 | 0 | 0 | 2 | 2
+			// 0 | 0 | 0 | 0 | 2 | 9 | 1
+			// 0 | 3	// loon lakes
+			// 0 | 0 | 13
+			// 0 | 0 | 2 | 28
+			// 0 | 0 | 0 | 4 | 14
+			// 0 | 0 | 0 | 0 | 4 | 9
+			// 0 | 0 | 0 | 0 | 0 | 0 | 0
+			// 0 | 5	// archipelago
+			// 0 | 0 | 19
+			// 0 | 0 | 0 | 14
+			// 0 | 0 | 0 | 7 | 15
+			// 0 | 0 | 0 | 1 | 4 | 2
+			// 0 | 0 | 0 | 0 | 3 | 6 | 1
 
 			function colorenergy() {
 				precalc();
@@ -223,19 +254,22 @@
 				// optimal number of colors
 				for (let i = 1; i < 8; i++) {
 					sum += 5. * Math.abs(colcounts[i] - optcounts[i]);
-				}
+				}			
 				
+				sum += 3. * adjfails; // penalizes same colors being adjacent
+				sum	+= 8. * neighfails; // penalizes hexes that have one color three times as neighbor
 				
-				
-				sum += 3 * adjfails; // penalizes same colors being adjacent
-				sum	+= 8 * neighfails; // penalizes hexes that have one color three times as neighbor
-				
-				// neighbourhood diversity fails:
-				sum += neighdivs[3][2];
-				sum += 3 * neighdivs[4][2] + neighdivs[4][3];
-				sum += 6 * neighdivs[5][2] + 4 * neighdivs[5][3] +  neighdivs[5][4];
-				sum += 6 * neighdivs[6][2] + 6 * neighdivs[6][3] + 2 * neighdivs[6][4] + 3 * neighdivs[6][6];
-				
+				// neighbourhood hard diversity fails:
+				sum += 3.* neighdivs[3][2];
+				sum += 3. * neighdivs[4][2];
+				sum += 3. * neighdivs[5][2] + 3. * neighdivs[5][3];
+				sum += 3. * neighdivs[6][2] + 3. * neighdivs[6][3] + 3. * neighdivs[6][4];
+				// neighbourhood soft diversity fails:
+				sum += 1. * Math.max(neighdivs[4][3] - Math.round(0.12*landdegrees[4]), Math.round(0.05*landdegrees[4]) - neighdivs[4][3], 0);
+				sum += 1. * Math.max(neighdivs[5][4] - Math.round(0.66*landdegrees[5]), Math.round(0.33*landdegrees[5]) - neighdivs[5][4], 0);	// since 5/4 and 5/5 are the only non-hard fails this balances 5/5 already
+				sum += 1. * Math.max(neighdivs[6][4] - Math.round(0.66*landdegrees[6]), Math.round(0.25*landdegrees[6]) - neighdivs[6][4], 0);
+				sum += 2. * Math.max(neighdivs[6][6] - Math.round(0.11*landdegrees[6]), 0);
+			
 				
 				sum += centersfail; // penalize uneven distribution of colors spatially
 				sum += 3 * clusteropfail + clustergoodfail + 0.015 * clusterdecentfail;	// penalizes large clusters of color+(colors that are adjacent in color-circle)
