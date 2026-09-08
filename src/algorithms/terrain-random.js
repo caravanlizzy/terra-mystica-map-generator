@@ -75,7 +75,6 @@
         fill(grid, inputs) {
 			// ######################### variables we need while running the algorithm and dont want to pass around the whole time
 			let g = grid; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
-			console.log("grid test", g);
 			let sizefactor = g.nHexes() / 113.;
 
 			let cells = [];		// terrain information as 2d array		
@@ -129,6 +128,7 @@
 			
 			let reallyrunalgo = true; // toggle to false to only get some analysis data
 
+			console.log("grid test", g);
 			cells = []; adjsx = []; adjsy = []; adjcols = [];
 			// generate the field
 			for (let j = 0; j < grid.height; j++) {
@@ -137,10 +137,11 @@
 				for (let i = 0; i < grid.rowWidth(j); i++) {
 					let col = 0;
 					if (inputs.cont == 0) {
-						if (g.get(i,j) != 0) col = 1 + rndint(7);
+						if (g.get(i,j) !== 0) col = 1 + rndint(7);
 					} else {
-						cells[j].push(g.get(i,j));
+						col = g.get(i,j);
 					}
+					cells[j].push(col);
 					clusterscan[j].push(0);
 				}
 			}
@@ -153,7 +154,7 @@
 				}
 			}
 			// calculate the neighbour geometry
-			console.log("test", cells);
+			console.log("apres test", cells);
 			for (let y = 0; y < g.height; y++) {
 				adjsx.push([]); adjsy.push([]);
 				for (let x = 0; x < g.rowWidth(y); x++) {				
@@ -185,8 +186,8 @@
 			let noptsteps = (reallyrunalgo ? inputs.iterations : 0) * sizefactor * Math.max(1, sizefactor);
 			for (let k = 0; k < noptsteps; k++) {
 				optimizecolor();
-				console.log("curenergy", curenergy);
 			}		
+			console.log("curenergy", curenergy);
 			// console.log(neighdivs);
 			
 			// translating it back to the grid
