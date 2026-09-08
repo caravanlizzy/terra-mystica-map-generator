@@ -193,12 +193,9 @@
 			};
 			console.log("######### land algo report ##########");
 			console.log("cur energy/color energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
+			console.log("color counts, #adj pairs", colcounts, adjfails);
 			console.log("land degrees", landdegrees, landdegrees.reduce((a, b) => a + b, 0));
 			console.log("neigh diversities\n", toTable(neighdivs));
-			// console.log("water degrees", wateradjs, wateradjs.reduce((a, b) => a + b, 0));
-			// console.log("water borders", waterborders);
-			// console.log("water clusters", waterclustern, nwatercluster);
-			// console.log("land clusters", landclustern, nlandcluster);
 			
 			// translating it back to the grid
 			
