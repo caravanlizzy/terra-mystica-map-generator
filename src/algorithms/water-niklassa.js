@@ -125,7 +125,7 @@
         function writeCellsToGrid(grid) {
             for (let j = 0; j < grid.height; j++) {
                 for (let i = 0; i < grid.rowWidth(j); i++) {
-                    grid.set(i, j, cells[j][i] == 0 ? 0 : -1);
+                    grid.set(i, j, cells[j][i]);
                 }
             }
         }
