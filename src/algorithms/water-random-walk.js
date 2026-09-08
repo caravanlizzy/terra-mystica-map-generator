@@ -44,7 +44,9 @@
             }
         }
 
-        grid.reset();
+        // The app hands us a grid already in the desired starting state (fresh
+        // empty when Continue is off, water-only when on), so we never reset it
+        // ourselves; we just lay down the water we grew.
         water.forEach(coordinate => {
             const [x, y] = coordinate.split(',').map(Number);
             grid.set(x, y, 0);

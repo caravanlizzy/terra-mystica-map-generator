@@ -93,7 +93,6 @@
     function onEditClick(x, y) {
         state.selected = [];
         $('preset').value = '';
-        if (hasTerrain()) state.grid.resetLand();
         state.grid.set(x, y, state.grid.isWaterAt(x, y) ? UNASSIGNED : WATER);
         renderCurrent();
     }
@@ -261,14 +260,26 @@
         saveUiPreferences();
     }
 
+    // Rebuild the grid for new dimensions while preserving what the user has
+    // already drawn: cells whose coordinates still exist are carried over (the
+    // MapGrid constructor drops out-of-bounds ones and fills new hexes with
+    // UNASSIGNED). Unlike "New empty map" this never wipes the current layout.
+    function resizeGridPreserving(dimensions) {
+        state.grid = new TM.MapGrid({ ...dimensions, cells: state.grid.toGrid() });
+        enterEditMode(true);
+        renderCurrent();
+        saveUiPreferences();
+    }
+
     function restoreDefaults() {
         TM.storage.clearUiPreferences();
         window.location.reload();
     }
 
-    // Every water hex back to land. Unlike "New empty map" this ignores the
-    // width/height inputs, so a size typed but not applied stays unapplied.
-    function resetWater() {
+    // The single explicit full reset: every cell back to unassigned land.
+    // Unlike "New empty map" this ignores the width/height inputs, so a size
+    // typed but not applied stays unapplied.
+    function resetGrid() {
         state.grid.reset();
         enterEditMode(true);
         renderCurrent();
@@ -288,9 +299,13 @@
     async function runWaterAlgorithm() {
         const dimensions = readDimensions();
         const continueFromCurrentLayout = $('continueWater').checked;
-        const grid = continueFromCurrentLayout
-            ? state.grid
-            : new TM.MapGrid(dimensions);
+        // use existing grid on continue, init MapGrid on new generation
+        let grid;
+        if (continueFromCurrentLayout) {
+            grid = state.grid;
+        } else {
+            grid = new TM.MapGrid(dimensions);
+        }
         const algorithm = getSelectedWaterAlgorithm();
         const inputs = inputValues(algorithm, state.waterAlgorithmInputs);
         // Make the working grid current before the algorithm can yield and
@@ -542,10 +557,7 @@
         };
 
         $('form').onchange = () => {
-            state.grid = new TM.MapGrid(readDimensions());
-            enterEditMode(true);
-            renderCurrent();
-            saveUiPreferences();
+            resizeGridPreserving(readDimensions());
         };
 
         // Redraw the map immediately as the size changes, without forcing the
@@ -553,10 +565,7 @@
         const liveResize = () => {
             const width = Math.max(1, Math.min(40, +$('width').value || 13));
             const height = Math.max(1, Math.min(40, +$('height').value || 9));
-            state.grid = new TM.MapGrid({ width, height, form: state.grid.form });
-            enterEditMode(true);
-            renderCurrent();
-            saveUiPreferences();
+            resizeGridPreserving({ width, height, form: state.grid.form });
         };
         $('width').oninput = liveResize;
         $('height').oninput = liveResize;
@@ -565,7 +574,7 @@
 
         $('waterAlgorithm').onchange = (event) => selectWaterAlgorithm(event.target.value);
 
-        $('resetWater').onclick = resetWater;
+        $('resetWater').onclick = resetGrid;
 
         $('randomWater').onclick = runWaterAlgorithm;
         $('continueWater').onchange = saveUiPreferences;

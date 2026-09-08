@@ -13,367 +13,375 @@
  * by the inner functions of a WaterNiklassa instance, so the helper functions
  * can share it without passing it around the whole time.
  */
- 
- 
 
- 
- 
+
 (function (TM) {
     'use strict';
 
-	function rndint(max) {
-		return Math.floor(Math.random() * max);
-	}
+    function rndint(max) {
+        return Math.floor(Math.random() * max);
+    }
 
-	function WaterNiklassa(inputs) {
-		// ######################### variables we need while running the algorithm and dont want to pass around the whole time
-		let cells = [];		// terrain information as 2d array
-		let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
-		let adjsy = [];
-		let adjcols = []; // list per cell of number of each adjacent color
-		let sizefactor = 1;
+    function WaterNiklassa(inputs) {
+        // ######################### variables we need while running the algorithm and dont want to pass around the whole time
+        let cells = [];		// terrain information as 2d array
+        let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
+        let adjsy = [];
+        let adjcols = []; // list per cell of number of each adjacent color
+        let sizefactor = 1;
 
-		let waterborders = 0; // counts how many water hex are at the border
-		let wateradjborders = 0;  // I think this counts water hex at the border that are adjacent to other water hex at the border (and water hex in the corner)
-		let wateradjs = [0,0,0,0,0,0,0]; // lists number of water hex that have this number of water neighbors
-		let landadjs = [0,0,0,0,0,0,0]; // lists number of land hex that have this number of land neighbors
+        let waterborders = 0; // counts how many water hex are at the border
+        let wateradjborders = 0;  // I think this counts water hex at the border that are adjacent to other water hex at the border (and water hex in the corner)
+        let wateradjs = [0, 0, 0, 0, 0, 0, 0]; // lists number of water hex that have this number of water neighbors
+        let landadjs = [0, 0, 0, 0, 0, 0, 0]; // lists number of land hex that have this number of land neighbors
 
-		let colcounts = [];		// counts the total number of hexes of each color
-		let g = null; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
-		let curenergy = 0; // stores current energy
-		let optcounts = [36,11,11,11,11,11,11,11];  // optimal envisioned number of terrains
+        let colcounts = [];		// counts the total number of hexes of each color
+        let g = null; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
+        let curenergy = 0; // stores current energy
+        let optcounts = [36, 11, 11, 11, 11, 11, 11, 11];  // optimal envisioned number of terrains
 
-		let landclustern = [];		// counts land clusters of size i
-		let waterclustern = [];	// counts water clusters of size i
-		let nlandcluster = 0;
-		let nwatercluster = 0;
-		let clusterscan = [];	// temp variable that saves whether a hex has already been counted for cluster computations
+        let landclustern = [];		// counts land clusters of size i
+        let waterclustern = [];	// counts water clusters of size i
+        let nlandcluster = 0;
+        let nwatercluster = 0;
+        let clusterscan = [];	// temp variable that saves whether a hex has already been counted for cluster computations
 
-	async function run(grid) {
+        async function run(grid) {
 
-		g = grid;
-		//console.log("grid obtained at water run",g);
-		//console.log("inputs", inputs);
-		
-		// have some compensation for target sizes in larger maps
-		sizefactor = g.nHexes() / 113.;
-		
-		// set the actually optimal count of water
-		optcounts[0] = g.nHexes() - 7 * Math.round(g.nHexes() * (1 - inputs.waterRatio) / 7.);
+            g = grid;
+            //console.log("grid obtained at water run",g);
+            //console.log("inputs", inputs);
 
-		cells = []; adjsx = []; adjsy = []; adjcols = [];
-		// generate the field
-		for (let j = 0; j < grid.height; j++) {
-			cells.push([]);
-			clusterscan.push([]);
-			for (let i = 0; i < grid.rowWidth(j); i++) {
-				let col = (rndint(113) < 2*optcounts[0] ? 0 :1); // + rndint(7)
-				if (inputs.cont == 1) {
-					col = parseInt(g.get(i,j));
-				}
-				cells[j].push(col);
-				clusterscan[j].push(0);
-			}
-		}
-		
-		// calculate the neighbour geometry
-		for (let y = 0; y < g.height; y++) {
-			adjsx.push([]); adjsy.push([]);
-			for (let x = 0; x < g.rowWidth(y); x++) {				
-				adjsx[y].push([]); adjsy[y].push([]);
-				for (let i = 0; i < 6; i++) {
-					let ncoord = g.neighbor(x,y,i);
-					let nx = ncoord[0], ny = ncoord[1];
-					if (g.outOfBounds(nx,ny)) continue;					
-					adjsx[y][x].push(nx);
-					adjsy[y][x].push(ny);
-				}
-			}
-		}
+            // have some compensation for target sizes in larger maps
+            sizefactor = g.nHexes() / 113.;
 
-		// first calculation of energy
-		curenergy = waterenergy();
-		
-		// now optimize
-		let nsteps = inputs.iterations * sizefactor;
-		for (let k = 0; k < nsteps; k++) {
-			optimizewater();
-			if ((k + 1) % 100 === 0) {
-				// Publish this batch to the UI's live grid before redrawing it.
-				writeCellsToGrid(grid);
-				TM.app.renderCurrent();
-				// Let the browser paint the redraw before optimizing the next batch.
-				await new Promise(requestAnimationFrame);
-			}
-		}	
-		console.log("######### water algo report ##########");
-		console.log("cur energy/water energy", curenergy, waterenergy());	//its important to call waterenergy here so the rest of the numbers below are correct
-		console.log("land degrees", landadjs, landadjs.reduce((a, b) => a + b, 0));
-		console.log("water degrees", wateradjs, wateradjs.reduce((a, b) => a + b, 0));
-		console.log("water borders", waterborders);
-		console.log("water clusters", waterclustern, nwatercluster);
-		console.log("land clusters", landclustern, nlandcluster);
+            // set the actually optimal count of water
+            optcounts[0] = g.nHexes() - 7 * Math.round(g.nHexes() * (1 - inputs.waterRatio) / 7.);
 
-		// Publish the final partial batch when nsteps is not divisible by 100.
-		writeCellsToGrid(grid);
+            cells = [];
+            adjsx = [];
+            adjsy = [];
+            adjcols = [];
+            // generate the field
+            for (let j = 0; j < grid.height; j++) {
+                cells.push([]);
+                clusterscan.push([]);
+                for (let i = 0; i < grid.rowWidth(j); i++) {
+                    let col = (rndint(113) < 2 * optcounts[0] ? 0 : 1); // + rndint(7)
+                    if (inputs.cont == 1) {
+                        col = parseInt(g.get(i, j));
+                    }
+                    cells[j].push(col);
+                    clusterscan[j].push(0);
+                }
+            }
 
-        return grid;
-	}
+            // calculate the neighbour geometry
+            for (let y = 0; y < g.height; y++) {
+                adjsx.push([]);
+                adjsy.push([]);
+                for (let x = 0; x < g.rowWidth(y); x++) {
+                    adjsx[y].push([]);
+                    adjsy[y].push([]);
+                    for (let i = 0; i < 6; i++) {
+                        let ncoord = g.neighbor(x, y, i);
+                        let nx = ncoord[0], ny = ncoord[1];
+                        if (g.outOfBounds(nx, ny)) continue;
+                        adjsx[y][x].push(nx);
+                        adjsy[y][x].push(ny);
+                    }
+                }
+            }
 
-	function writeCellsToGrid(grid) {
-		for (let j = 0; j < grid.height; j++) {
-			for (let i = 0; i < grid.rowWidth(j); i++) {
-				grid.set(i, j, cells[j][i] == 0 ? 0 : -1);
-			}
-		}
-	}
+            // first calculation of energy
+            curenergy = waterenergy();
 
-	function optimizewater() {
-		updaterandomwater();
-		swaprandomwater()
-	}
-	
- 
-	 /* preset data
-		landdegrees / cluster
-		original:	[ 0, 3, 18, 21, 23, 6, 6 ] 77 / 16 19 20 22 = 4
-		fire ice:	[ 0, 2, 18, 19, 26, 9, 3 ] 77 / 7 10 11 11 14 24 = 6
-		fjords:		[ 0, 5, 14, 21, 24, 4, 12 ] 80 / 7 9 11 16 18 19 = 6
-		loonlakes:	[ 0, 3, 13, 30, 18, 13, 0 ] 77 / 77 = 1
-		archipel:	[ 0, 5, 19, 14, 22, 7, 10 ] 77 / 4 5 5 5 7 7 21 23 = 8
-		waterdegrees (border) / cluster
-		original:	[ 0, 4, 25, 4, 3, 0, 0 ] 36 (4) / 36 = 1
-		fire ice: 	[ 0, 7, 23, 5, 0, 0, 0 ] 35 (7) / 14 21 = 2
-		fjords:		[ 0, 3, 25, 5, 0, 0, 0 ] 33 (5) / 34 = 1
-		loonlakes:	[ 0, 14, 15, 6, 0, 0, 0 ] 35 (6) / 3 5 5 6 7 9 = 6
-		archipel:	[ 0, 7, 14, 9, 6, 0, 0 ] 36 (7) / 37 = 1
-	 */
+            // now optimize
+            let nsteps = inputs.iterations * sizefactor;
+            for (let k = 0; k < nsteps; k++) {
+                optimizewater();
+                if ((k + 1) % 100 === 0) {
+                    // Publish this batch to the UI's live grid before redrawing it.
+                    writeCellsToGrid(grid);
+                    TM.app.renderCurrent();
+                    // Let the browser paint the redraw before optimizing the next batch.
+                    await new Promise(requestAnimationFrame);
+                }
+            }
+            console.log("######### water algo report ##########");
+            console.log("cur energy/water energy", curenergy, waterenergy());	//its important to call waterenergy here so the rest of the numbers below are correct
+            console.log("land degrees", landadjs, landadjs.reduce((a, b) => a + b, 0));
+            console.log("water degrees", wateradjs, wateradjs.reduce((a, b) => a + b, 0));
+            console.log("water borders", waterborders);
+            console.log("water clusters", waterclustern, nwatercluster);
+            console.log("land clusters", landclustern, nlandcluster);
 
-	function waterenergy() {
-		precalc();
-		calcwaterfails();
-		calcwaterclusters();
-		
-		let sum = 0.;
-		let sf = sizefactor;
-		
-		sum += 5. * Math.abs(colcounts[0] - optcounts[0]); // target number of water hex
-		
-		
-		sum += 3. * wateradjs[0];	// penalty for ponds
-		sum += 2. * Math.max(wateradjs[1] - 8*sf, 3*sf - wateradjs[1], 0);	// penalty for riverends
-		sum += 1. * Math.max(wateradjs[2] - 28*sf, 16*sf - wateradjs[2], 0);	// penalty for rivers
-		sum += 2. * Math.max(wateradjs[3] - 6*sf, 4*sf - wateradjs[3], 0);	// penalty for branches and large rivers
-		sum += 2. * Math.max(wateradjs[4] - 4*sf, 0*sf - wateradjs[4], 0);	// penalty for open water
-		sum += 2. * Math.max(wateradjs[5] - 0*sf, 0*sf - wateradjs[5], 0);	// penalty for 
-		sum += 3. * Math.max(wateradjs[6] - 0*sf, 0*sf - wateradjs[6], 0);	// penalty for ocean
-		
-		sum += 5. * landadjs[0];	// penalty for islands
-		sum += 2. * Math.max(landadjs[1] - 5*sf, 2*sf - landadjs[1], 0);	// penalty for halfislands
-		sum += 1. * Math.max(landadjs[2] - 18*sf, 14*sf - landadjs[2], 0);	// penalty for landbridges
-		sum += 1. * Math.max(landadjs[3] - 28*sf, 15*sf - landadjs[3], 0);	// penalty for beaches
-		sum += 1. * Math.max(landadjs[4] - 25*sf, 19*sf - landadjs[4], 0);	// penalty for coast
-		sum += 1. * Math.max(landadjs[5] - 10*sf, 5*sf - landadjs[5], 0);	// penalty for bays
-		sum += 1. * Math.max(landadjs[6] - 9*sf, 3*sf - landadjs[6], 0);	// penalty for inland
+            // Publish the final partial batch when nsteps is not divisible by 100.
+            writeCellsToGrid(grid);
 
-		for (let i = 0; i < landclustern.length; i++) {
-			if (!landclustern[i]) continue;
-			if (i < 5*Math.min(1,sf)) sum += 4 * landclustern[i];  // penalizes small land clusters
-			if (i > 24*Math.sqrt(sf)) sum += (i-24)*sf * landclustern[i];  // penalizes large land clusters
-		}
-		sum += 4. * Math.max(nlandcluster - inputs.nLandClusterMax*sf, inputs.nLandClusterMin*sf - nlandcluster, 0);	// penalty for too few or many land clusters	
+            return grid;
+        }
 
-		for (let i = 0; i < waterclustern.length; i++) {
-			if (!waterclustern[i]) continue;
-			if (i < 10*Math.min(1,sf)) sum += 5. * waterclustern[i];  // penalizes small water clusters
-		}
-		sum += 4. * Math.max(nwatercluster - 2*sf, 1*sf - nwatercluster, 0);	// penalty for too few or many water clusters	
+        function writeCellsToGrid(grid) {
+            for (let j = 0; j < grid.height; j++) {
+                for (let i = 0; i < grid.rowWidth(j); i++) {
+                    grid.set(i, j, cells[j][i]);
+                }
+            }
+        }
 
-		sum += 2. * Math.max(waterborders - 7*Math.sqrt(sf), 4*Math.sqrt(sf) - waterborders, 0);	// penalty for riverends
-		sum += 2. * wateradjborders;			// penalizes adjacent border water hexx
+        function optimizewater() {
+            updaterandomwater();
+            swaprandomwater()
+        }
 
-		
-		return sum;
 
-		// sum += Math.abs(landadjs[2] - 19 * sizefactor);	// penalty for too many landbridges
-		// sum += Math.abs(landadjs[3] - 28 * sizefactor);	// penalty for too many landbridges
-		// sum += Math.abs(landadjs[4] - 47 * sizefactor);	// penalty for too many landbridges
-		// sum += 2 * Math.abs(7 * sizefactor - landadjs[5]); // penalty for too few coastal hex
+        /* preset data
+           landdegrees / cluster
+           original:	[ 0, 3, 18, 21, 23, 6, 6 ] 77 / 16 19 20 22 = 4
+           fire ice:	[ 0, 2, 18, 19, 26, 9, 3 ] 77 / 7 10 11 11 14 24 = 6
+           fjords:		[ 0, 5, 14, 21, 24, 4, 12 ] 80 / 7 9 11 16 18 19 = 6
+           loonlakes:	[ 0, 3, 13, 30, 18, 13, 0 ] 77 / 77 = 1
+           archipel:	[ 0, 5, 19, 14, 22, 7, 10 ] 77 / 4 5 5 5 7 7 21 23 = 8
+           waterdegrees (border) / cluster
+           original:	[ 0, 4, 25, 4, 3, 0, 0 ] 36 (4) / 36 = 1
+           fire ice: 	[ 0, 7, 23, 5, 0, 0, 0 ] 35 (7) / 14 21 = 2
+           fjords:		[ 0, 3, 25, 5, 0, 0, 0 ] 33 (5) / 34 = 1
+           loonlakes:	[ 0, 14, 15, 6, 0, 0, 0 ] 35 (6) / 3 5 5 6 7 9 = 6
+           archipel:	[ 0, 7, 14, 9, 6, 0, 0 ] 36 (7) / 37 = 1
+        */
+
+        function waterenergy() {
+            precalc();
+            calcwaterfails();
+            calcwaterclusters();
+
+            let sum = 0.;
+            let sf = sizefactor;
+
+            sum += 5. * Math.abs(colcounts[0] - optcounts[0]); // target number of water hex
+
+
+            sum += 3. * wateradjs[0];	// penalty for ponds
+            sum += 2. * Math.max(wateradjs[1] - 8 * sf, 3 * sf - wateradjs[1], 0);	// penalty for riverends
+            sum += 1. * Math.max(wateradjs[2] - 28 * sf, 16 * sf - wateradjs[2], 0);	// penalty for rivers
+            sum += 2. * Math.max(wateradjs[3] - 6 * sf, 4 * sf - wateradjs[3], 0);	// penalty for branches and large rivers
+            sum += 2. * Math.max(wateradjs[4] - 4 * sf, 0 * sf - wateradjs[4], 0);	// penalty for open water
+            sum += 2. * Math.max(wateradjs[5] - 0 * sf, 0 * sf - wateradjs[5], 0);	// penalty for
+            sum += 3. * Math.max(wateradjs[6] - 0 * sf, 0 * sf - wateradjs[6], 0);	// penalty for ocean
+
+            sum += 5. * landadjs[0];	// penalty for islands
+            sum += 2. * Math.max(landadjs[1] - 5 * sf, 2 * sf - landadjs[1], 0);	// penalty for halfislands
+            sum += 1. * Math.max(landadjs[2] - 18 * sf, 14 * sf - landadjs[2], 0);	// penalty for landbridges
+            sum += 1. * Math.max(landadjs[3] - 28 * sf, 15 * sf - landadjs[3], 0);	// penalty for beaches
+            sum += 1. * Math.max(landadjs[4] - 25 * sf, 19 * sf - landadjs[4], 0);	// penalty for coast
+            sum += 1. * Math.max(landadjs[5] - 10 * sf, 5 * sf - landadjs[5], 0);	// penalty for bays
+            sum += 1. * Math.max(landadjs[6] - 9 * sf, 3 * sf - landadjs[6], 0);	// penalty for inland
+
+            for (let i = 0; i < landclustern.length; i++) {
+                if (!landclustern[i]) continue;
+                if (i < 5 * Math.min(1, sf)) sum += 4 * landclustern[i];  // penalizes small land clusters
+                if (i > 24 * Math.sqrt(sf)) sum += (i - 24) * sf * landclustern[i];  // penalizes large land clusters
+            }
+            sum += 4. * Math.max(nlandcluster - inputs.nLandClusterMax * sf, inputs.nLandClusterMin * sf - nlandcluster, 0);	// penalty for too few or many land clusters
+
+            for (let i = 0; i < waterclustern.length; i++) {
+                if (!waterclustern[i]) continue;
+                if (i < 10 * Math.min(1, sf)) sum += 5. * waterclustern[i];  // penalizes small water clusters
+            }
+            sum += 4. * Math.max(nwatercluster - 2 * sf, 1 * sf - nwatercluster, 0);	// penalty for too few or many water clusters
+
+            sum += 2. * Math.max(waterborders - 7 * Math.sqrt(sf), 4 * Math.sqrt(sf) - waterborders, 0);	// penalty for riverends
+            sum += 2. * wateradjborders;			// penalizes adjacent border water hexx
+
+
+            return sum;
+
+            // sum += Math.abs(landadjs[2] - 19 * sizefactor);	// penalty for too many landbridges
+            // sum += Math.abs(landadjs[3] - 28 * sizefactor);	// penalty for too many landbridges
+            // sum += Math.abs(landadjs[4] - 47 * sizefactor);	// penalty for too many landbridges
+            // sum += 2 * Math.abs(7 * sizefactor - landadjs[5]); // penalty for too few coastal hex
 // //		sum += Math.max(landadjs[6] - 10 * sizefactor, 0);	// penalty for too many inland hex
 // //		sum += 5 * Math.max(3 * sizefactor - landadjs[6], 0);	// penalty for too few inland hex
-		// sum += 2 * Math.abs(landadjs[6] - 6  * sizefactor);
+            // sum += 2 * Math.abs(landadjs[6] - 6  * sizefactor);
 
-		// sum += 3. * wateradjs[0]; // penalty for isolated water hex		
-		// sum += 2. * Math.max(wateradjs[1] - 1.5 * sizefactor, 0);	// penalty for having too many "river ends"
-		// sum += Math.max(wateradjs[3] - 3.5 * sizefactor, 0); 	// penalty for too many river crossings
-		// sum += Math.max(wateradjs[4] - 0.5 * sizefactor, 0);	// penalty for too many "fords"
-		// sum += 2. * Math.max(wateradjs[5] - (sizefactor - 1),0);		// penalty for any almost ocean tiles
-		// sum += 3. * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
-	}	
+            // sum += 3. * wateradjs[0]; // penalty for isolated water hex
+            // sum += 2. * Math.max(wateradjs[1] - 1.5 * sizefactor, 0);	// penalty for having too many "river ends"
+            // sum += Math.max(wateradjs[3] - 3.5 * sizefactor, 0); 	// penalty for too many river crossings
+            // sum += Math.max(wateradjs[4] - 0.5 * sizefactor, 0);	// penalty for too many "fords"
+            // sum += 2. * Math.max(wateradjs[5] - (sizefactor - 1),0);		// penalty for any almost ocean tiles
+            // sum += 3. * Math.max(wateradjs[6] - (sizefactor - 1),0);		// penalty for true ocean
+        }
 
-	function precalc() { // do somewhat unified pre calculations for energy:
-		// // centers
-		// for (let k = 0; k < ncols; k++) { // cx = 5.79, cy = 4
-			// centersx[k] = 0;
-			// centersy[k] = 0;
-		// }
-		// total number of colors
-		colcounts = [0,0,0,0,0,0,0,0];
-		// colors on the border;
-		// ncolorborder = [0,0,0,0,0,0,0,0];
-		// adjcolors per cell
-		adjcols = [];
-		for (let y = 0; y < g.height; y++) {
-			adjcols[y] = [];
-			for (let x = 0; x < g.rowWidth(y); x++) {
-				let c = cells[y][x];
-				// //counts
-				colcounts[c]++;
-				// color adjacencies
-				let ncol = [0,0,0,0,0,0,0,0];
-				for (let i = 0; i < adjsx[y][x].length; i++) {
-					ncol[cells[adjsy[y][x][i] ][adjsx[y][x][i] ] ]++;
-				}
-				adjcols[y][x] = ncol.slice();
-				//if (adjsx[y][x].length < 6) ncolorborder[c]++;
-				// // centers
-				// centersx[c] += x;
-				// centersy[c] += y;			
-			 }
-		 }
-		// for (let k = 0; k < ncols; k++) {
-			// centersx[k] = (centersx[k] / colcounts[k]) - 5.79; 
-			// centersy[k] = (centersy[k] / colcounts[k]) - 4; 
-		// }	
-	}
-	
-	function calcwaterfails() {
-		landadjs = [0,0,0,0,0,0,0];
-		wateradjs = [0,0,0,0,0,0,0];
-		waterborders = 0;
-		wateradjborders = 0;
-		for (let j = 0; j < g.height; j++) {
-			for (let i = 0; i < g.rowWidth(j); i++) {
-				if (cells[j][i] != 0) calclandfailscell(i,j);
-				else calcwaterfailscell(i,j);
-				// if (cells[j][i] == 0) calcwaterfailscell(i,j);
-			}
-		}
-	}
-	function calcwaterfailscell(x, y) {
-		let nn = adjsx[y][x].length; // number of neighbor hexs
-		let nw = adjcols[y][x][0]; // number of water neighbors
-		wateradjs[nw]++;
-		if (nn < 6) { // on the border
-			waterborders += 1;
-			if (nn < 3) wateradjborders += 3; // in the corner is also bad
-			if (nw != 1) wateradjborders++;		
-		} else {
+        function precalc() { // do somewhat unified pre calculations for energy:
+            // // centers
+            // for (let k = 0; k < ncols; k++) { // cx = 5.79, cy = 4
+            // centersx[k] = 0;
+            // centersy[k] = 0;
+            // }
+            // total number of colors
+            colcounts = [0, 0, 0, 0, 0, 0, 0, 0];
+            // colors on the border;
+            // ncolorborder = [0,0,0,0,0,0,0,0];
+            // adjcolors per cell
+            adjcols = [];
+            for (let y = 0; y < g.height; y++) {
+                adjcols[y] = [];
+                for (let x = 0; x < g.rowWidth(y); x++) {
+                    let c = cells[y][x];
+                    // //counts
+                    colcounts[c]++;
+                    // color adjacencies
+                    let ncol = [0, 0, 0, 0, 0, 0, 0, 0];
+                    for (let i = 0; i < adjsx[y][x].length; i++) {
+                        ncol[cells[adjsy[y][x][i]][adjsx[y][x][i]]]++;
+                    }
+                    adjcols[y][x] = ncol.slice();
+                    //if (adjsx[y][x].length < 6) ncolorborder[c]++;
+                    // // centers
+                    // centersx[c] += x;
+                    // centersy[c] += y;
+                }
+            }
+            // for (let k = 0; k < ncols; k++) {
+            // centersx[k] = (centersx[k] / colcounts[k]) - 5.79;
+            // centersy[k] = (centersy[k] / colcounts[k]) - 4;
+            // }
+        }
+
+        function calcwaterfails() {
+            landadjs = [0, 0, 0, 0, 0, 0, 0];
+            wateradjs = [0, 0, 0, 0, 0, 0, 0];
+            waterborders = 0;
+            wateradjborders = 0;
+            for (let j = 0; j < g.height; j++) {
+                for (let i = 0; i < g.rowWidth(j); i++) {
+                    if (cells[j][i] != 0) calclandfailscell(i, j);
+                    else calcwaterfailscell(i, j);
+                    // if (cells[j][i] == 0) calcwaterfailscell(i,j);
+                }
+            }
+        }
+
+        function calcwaterfailscell(x, y) {
+            let nn = adjsx[y][x].length; // number of neighbor hexs
+            let nw = adjcols[y][x][0]; // number of water neighbors
+            wateradjs[nw]++;
+            if (nn < 6) { // on the border
+                waterborders += 1;
+                if (nn < 3) wateradjborders += 3; // in the corner is also bad
+                if (nw != 1) wateradjborders++;
+            } else {
 //			wateradjs[nw]++;
-		}
-	}
-	function calclandfailscell(x, y) {
-		let nn = adjsx[y][x].length;
-		let nw = adjcols[y][x][0];
-		landadjs[nn-nw] += 1;
-	}
+            }
+        }
+
+        function calclandfailscell(x, y) {
+            let nn = adjsx[y][x].length;
+            let nw = adjcols[y][x][0];
+            landadjs[nn - nw] += 1;
+        }
 
 
-	function calcwaterclusters() {
-		landclustern = [];
-		waterclustern = [];
-		nlandcluster = 0; nwatercluster = 0;
+        function calcwaterclusters() {
+            landclustern = [];
+            waterclustern = [];
+            nlandcluster = 0;
+            nwatercluster = 0;
 
-		// init: nothing scanned
-		for (let j = 0; j < g.height; j++) {
-			for (let i = 0; i < g.rowWidth(j); i++) {
-				clusterscan[j][i] = 0;
-			}
-		}
-		// begin recursive scans everywhere
-		for (let j = 0; j < g.height; j++) {
-			for (let i = 0; i < g.rowWidth(j); i++) {
-				if (clusterscan[j][i] == 1) continue; // already scanned
-				if (cells[j][i] ==  0) {
-					nwatercluster++;
-					let s = recwatercluster(i,j,0,0);
-					if (!waterclustern[s]) waterclustern[s] = 1;
-					else waterclustern[s]++;
-				} else {
-					nlandcluster++;
-					let s = recwatercluster(i,j,0,1);
-					if (!landclustern[s]) landclustern[s] = 1;
-					else landclustern[s]++;
-				}
-			}
-		}
+            // init: nothing scanned
+            for (let j = 0; j < g.height; j++) {
+                for (let i = 0; i < g.rowWidth(j); i++) {
+                    clusterscan[j][i] = 0;
+                }
+            }
+            // begin recursive scans everywhere
+            for (let j = 0; j < g.height; j++) {
+                for (let i = 0; i < g.rowWidth(j); i++) {
+                    if (clusterscan[j][i] == 1) continue; // already scanned
+                    if (cells[j][i] == 0) {
+                        nwatercluster++;
+                        let s = recwatercluster(i, j, 0, 0);
+                        if (!waterclustern[s]) waterclustern[s] = 1;
+                        else waterclustern[s]++;
+                    } else {
+                        nlandcluster++;
+                        let s = recwatercluster(i, j, 0, 1);
+                        if (!landclustern[s]) landclustern[s] = 1;
+                        else landclustern[s]++;
+                    }
+                }
+            }
 
-	}
+        }
 
-	function recwatercluster(x,y,size, wland) {
-		if (g.outOfBounds(x,y)) return size; // this cell aint existin
-		if (clusterscan[y][x] == 1) return size; // already scanned
-		let s = size;
-		let c = cells[y][x];
-		if ((c == 0) && (wland == 1)) return s;
-		if ((c != 0) && (wland == 0)) return s;
-		clusterscan[y][x] = 1; // scanned this
-		s++;
-		
-		// lets recurse
-		for (let i = 0; i < adjsx[y][x].length; i++) {
-			s = recwatercluster(adjsx[y][x][i],adjsy[y][x][i],s,wland);
-		}
-		return s;
-	}
+        function recwatercluster(x, y, size, wland) {
+            if (g.outOfBounds(x, y)) return size; // this cell aint existin
+            if (clusterscan[y][x] == 1) return size; // already scanned
+            let s = size;
+            let c = cells[y][x];
+            if ((c == 0) && (wland == 1)) return s;
+            if ((c != 0) && (wland == 0)) return s;
+            clusterscan[y][x] = 1; // scanned this
+            s++;
 
-	function updaterandomwater() {
-		let y = rndint(g.height);
-		let x = rndint(g.rowWidth(y)); 
-		let c = cells[y][x];
-		
-		let newc = (c == 0 ? 1: 0);
-		cells[y][x] = newc;
-		
-		let newenergy = waterenergy();
-		
-		if (newenergy > curenergy) { // need to change back, old stuff won + (Math.random()-.5)
-			cells[y][x] = c;
-		} else {
-			curenergy = newenergy; // keep the new energy
-			// changecount++;
-		}		
-	}
-	function swaprandomwater() {
-		let y1 = rndint(g.height);
-		let x1 = rndint(g.rowWidth(y1)); 
-		let y2 = rndint(g.height);
-		let x2 = rndint(g.rowWidth(y2)); 
-		if ((x1 == x2) && (y1 == y2)) return;
-		let c1 = cells[y1][x1];
-		let c2 = cells[y2][x2];
-		if ( (c1 == 0) && (c2 == 0) ) return;
-		if ( (c1 != 0) && (c2 != 0) ) return;
-		
-		let newc1 = c2, newc2 = c1;
-		cells[y1][x1] = c2; cells[y2][x2] = c1;
-		
-		let newenergy = waterenergy();
-		
-		if (newenergy > curenergy) { // need to change back, old stuff won + (Math.random()-.5)
-			cells[y1][x1] = c1; cells[y2][x2] = c2;
-		} else {
-			curenergy = newenergy; // keep the new energy
-			//changecount++;
-		}	
-	}
+            // lets recurse
+            for (let i = 0; i < adjsx[y][x].length; i++) {
+                s = recwatercluster(adjsx[y][x][i], adjsy[y][x][i], s, wland);
+            }
+            return s;
+        }
 
-		// expose the entry point on the instance
-		this.run = run;
-	}
+        function updaterandomwater() {
+            let y = rndint(g.height);
+            let x = rndint(g.rowWidth(y));
+            let c = cells[y][x];
+
+            let newc = (c == 0 ? 1 : 0);
+            cells[y][x] = newc;
+
+            let newenergy = waterenergy();
+
+            if (newenergy > curenergy) { // need to change back, old stuff won + (Math.random()-.5)
+                cells[y][x] = c;
+            } else {
+                curenergy = newenergy; // keep the new energy
+                // changecount++;
+            }
+        }
+
+        function swaprandomwater() {
+            let y1 = rndint(g.height);
+            let x1 = rndint(g.rowWidth(y1));
+            let y2 = rndint(g.height);
+            let x2 = rndint(g.rowWidth(y2));
+            if ((x1 == x2) && (y1 == y2)) return;
+            let c1 = cells[y1][x1];
+            let c2 = cells[y2][x2];
+            if ((c1 == 0) && (c2 == 0)) return;
+            if ((c1 != 0) && (c2 != 0)) return;
+
+            let newc1 = c2, newc2 = c1;
+            cells[y1][x1] = c2;
+            cells[y2][x2] = c1;
+
+            let newenergy = waterenergy();
+
+            if (newenergy > curenergy) { // need to change back, old stuff won + (Math.random()-.5)
+                cells[y1][x1] = c1;
+                cells[y2][x2] = c2;
+            } else {
+                curenergy = newenergy; // keep the new energy
+                //changecount++;
+            }
+        }
+
+        // expose the entry point on the instance
+        this.run = run;
+    }
 
 
-	// ##### eof niklas massacer
+    // ##### eof niklas massacer
 
     TM.algorithms = TM.algorithms || [];
     TM.algorithms.push({
@@ -382,11 +390,13 @@
         target: 'water',
         description: 'Simulated-annealing water generator that grows rivers and lakes while penalising isolated hexes, oversized oceans and border clumps.',
         inputs: [
-            { key: 'waterRatio', label: 'Water coverage', min: 0.05, max: 0.6, step: 0.01, value: 0.32 },
-            { key: 'nLandClusterMin', label: 'Min #land cluster', min: 1, max: 16, step: 1, value: 4 },
-            { key: 'nLandClusterMax', label: 'Max #land cluster', min: 1, max: 16, step: 1, value: 8 },
-            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 20000, step: 100, value: 10000 }
+            {key: 'waterRatio', label: 'Water coverage', min: 0.05, max: 0.6, step: 0.01, value: 0.32},
+            {key: 'nLandClusterMin', label: 'Min #land cluster', min: 1, max: 16, step: 1, value: 4},
+            {key: 'nLandClusterMax', label: 'Max #land cluster', min: 1, max: 16, step: 1, value: 8},
+            {key: 'iterations', label: 'Optimisation steps', min: 0, max: 20000, step: 100, value: 10000}
         ],
-        run: function (grid, inputs) { return new WaterNiklassa(inputs).run(grid); }
+        run: function (grid, inputs) {
+            return new WaterNiklassa(inputs).run(grid);
+        }
     });
 })(window.TM = window.TM || {});
