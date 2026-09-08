@@ -27,8 +27,7 @@
             this.width = layout.width;
             this.height = layout.height;
             this.form = layout.form;
-            this.cells = [];
-            this.reset();
+            this.cells = this.createEmptyCells();
             (layout.cells || []).forEach((row, y) => {
                 row.forEach((value, x) => {
                     if (!this.outOfBounds(x, y)) this.set(x, y, value);
@@ -61,12 +60,19 @@
         // Value at (x, y), or '' when off the board.
         at(x, y) { return this.outOfBounds(x, y) ? '' : this.get(x, y); }
 
-        // Clear every cell to unassigned land.
-        reset() {
-            this.cells = [];
+        // Build a fresh row-by-row grid with every cell unassigned land. Used
+        // both to initialise a new grid and to perform an explicit reset.
+        createEmptyCells() {
+            const cells = [];
             for (let y = 0; y < this.height; y++) {
-                this.cells.push(Array(this.rowWidth(y)).fill(UNASSIGNED));
+                cells.push(Array(this.rowWidth(y)).fill(UNASSIGNED));
             }
+            return cells;
+        }
+
+        // Clear every cell to unassigned land - the single explicit full reset.
+        reset() {
+            this.cells = this.createEmptyCells();
         }
 
         // Remove terrain assignments while retaining the current water layout.
@@ -150,7 +156,6 @@
 
         // Fill the grid with a terrain algorithm.
         generate(algorithm, inputs) {
-            //this.resetLand();
             algorithm.fill(this, resolveAlgorithmInputs(algorithm, inputs));
             return this;
         }
