@@ -96,6 +96,7 @@
 
 			let ncolorborder = [0,0,0,0,0,0,0,0]; // how many of that color are at the border
 			let totalborder = g.nBorderHexes(); // need to know
+			let bordercolmin = 0, bordercolmax = 0; // minimum and maximum number of border hexes per color
 			let colorborderfail = 0;
 
 			let countfails = 0; // total number of each color deviations
@@ -168,8 +169,10 @@
 					if (cells[y][x] != 0) landdegrees[nland]++;
 				}
 			}
+			// some border distri calculations
+			bordercolmin = Math.floor(totalborder / 7.); 
+			bordercolmax = Math.ceil(totalborder / 7.);
 			
-			console.log("landdegrees", landdegrees);
 			
 			
 			findland();
@@ -193,9 +196,10 @@
 			};
 			console.log("######### land algo report ##########");
 			console.log("cur energy/color energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
-			console.log("color counts, #adj pairs", colcounts, adjfails);
-			console.log("land degrees", landdegrees, landdegrees.reduce((a, b) => a + b, 0));
+			console.log("color counts, #adj pairs, #neigh fails", colcounts, adjfails, neighfails);
+			// console.log("land degrees", landdegrees, landdegrees.reduce((a, b) => a + b, 0)); // the water algorithm produces this
 			console.log("neigh diversities\n", toTable(neighdivs));
+			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
 			
 			// translating it back to the grid
 			
@@ -243,7 +247,7 @@
 				calccentersfail();
 				calccolorclusters();
 				calcship1fails();
-				calccolorborderfail();
+				// calccolorborderfail();
 				calcextclusters();
 
 				let sum = 0;
@@ -254,7 +258,12 @@
 				}			
 				
 				sum += 3. * adjfails; // penalizes same colors being adjacent
-				sum	+= 8. * neighfails; // penalizes hexes that have one color three times as neighbor
+
+				//sum += 2 * colorborderfail;  // penalizes uneven distribution of border hex among the colors
+				for (let i = 1; i < 8; i++) {
+					sum += 2. * Math.max(ncolorborder[i] - bordercolmax, bordercolmin - ncolorborder[i],0);
+				}
+				
 				
 				// neighbourhood hard diversity fails:
 				sum += 3.* neighdivs[3][2];
@@ -266,12 +275,13 @@
 				sum += 1. * Math.max(neighdivs[5][4] - Math.round(0.66*landdegrees[5]), Math.round(0.33*landdegrees[5]) - neighdivs[5][4], 0);	// since 5/4 and 5/5 are the only non-hard fails this balances 5/5 already
 				sum += 1. * Math.max(neighdivs[6][4] - Math.round(0.66*landdegrees[6]), Math.round(0.25*landdegrees[6]) - neighdivs[6][4], 0);
 				sum += 2. * Math.max(neighdivs[6][6] - Math.round(0.11*landdegrees[6]), 0);
+
+				sum	+= 4. * neighfails; // penalizes hexes that have one color three times as neighbor
 			
 				
 				sum += centersfail; // penalize uneven distribution of colors spatially
 				sum += 3 * clusteropfail + clustergoodfail + 0.015 * clusterdecentfail;	// penalizes large clusters of color+(colors that are adjacent in color-circle)
 //				sum += 2 * ship1fails; // this penalizes ship1 same color neighbors  (honestly this doesnt look super good since it doesnt seem to penalize if the distribution among the colors is bad, it just reduces total ship1 adjacencies)
-				sum += 2 * colorborderfail;  // penalizes uneven distribution of border hex among the colors
 				sum += 1.5 * extclusterfail; // penalizes clusters but clusters with ship1
 				
 				return sum;// + rnd()*2;
@@ -333,13 +343,13 @@
 				}
 			}
 
-			function calccolorborderfail() { // hier muss man noch was automatisieren die 40 macht mich skeptisch
-				colorborderfail = 0; 
-				let av = (totalborder - ncolorborder[0])/7.;
-				for (let i = 1; i < 8; i++) {
-					colorborderfail += 4 * (ncolorborder[i] - av) ** 2
-				}
-			}
+			// function calccolorborderfail() { // hier muss man noch was automatisieren die 40 macht mich skeptisch
+				// colorborderfail = 0; 
+				// let av = (totalborder - ncolorborder[0])/7.;
+				// for (let i = 1; i < 8; i++) {
+					// colorborderfail += 4 * (ncolorborder[i] - av) ** 2
+				// }
+			// }
 			
 			function calccentersfail() { 
 				let sum = 0;
