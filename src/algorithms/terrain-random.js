@@ -126,9 +126,7 @@
 			
 			let optcounts = [g.count(0),optavg,optavg,optavg,optavg,optavg,optavg,optavg];  // optimal envisioned number of terrains
 			
-			let reallyrunalgo = true; // toggle to false to only get some analysis data
 
-			console.log("grid test", g);
 			cells = []; adjsx = []; adjsy = []; adjcols = [];
 			// generate the field
 			for (let j = 0; j < grid.height; j++) {
@@ -154,7 +152,6 @@
 				}
 			}
 			// calculate the neighbour geometry
-			console.log("apres test", cells);
 			for (let y = 0; y < g.height; y++) {
 				adjsx.push([]); adjsy.push([]);
 				for (let x = 0; x < g.rowWidth(y); x++) {				
@@ -183,12 +180,25 @@
 			
 			
 			// now optimize
-			let noptsteps = (reallyrunalgo ? inputs.iterations : 0) * sizefactor * Math.max(1, sizefactor);
+			let noptsteps = inputs.iterations * sizefactor * Math.max(1, sizefactor);
 			for (let k = 0; k < noptsteps; k++) {
 				optimizecolor();
+				console.log("energy:", curenergy);
 			}		
-			console.log("curenergy", curenergy);
-			// console.log(neighdivs);
+
+
+			const toTable = arr => {
+				const w = arr[0].map((_, i) => Math.max(...arr.map(r => String(r[i]).length)));
+				return arr.map(r => r.map((v, i) => String(v).padEnd(w[i])).join(" | ")).join("\n");
+			};
+			console.log("######### land algo report ##########");
+			console.log("cur energy/water energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
+			console.log("land degrees", landdegrees, landdegrees.reduce((a, b) => a + b, 0));
+			console.log("neigh diversities\n", toTable(neighdivs));
+			// console.log("water degrees", wateradjs, wateradjs.reduce((a, b) => a + b, 0));
+			// console.log("water borders", waterborders);
+			// console.log("water clusters", waterclustern, nwatercluster);
+			// console.log("land clusters", landclustern, nlandcluster);
 			
 			// translating it back to the grid
 			

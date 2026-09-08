@@ -50,17 +50,15 @@
 		let clusterscan = [];	// temp variable that saves whether a hex has already been counted for cluster computations
 
 	async function run(grid) {
-		let reallyrunalgo = true; // toggle to false to only get some analysis data
 
 		g = grid;
 		//console.log("grid obtained at water run",g);
-		console.log("inputs", inputs);
+		//console.log("inputs", inputs);
 		
 		// have some compensation for target sizes in larger maps
 		sizefactor = g.nHexes() / 113.;
 		
 		// set the actually optimal count of water
-		//console.log("optnland", g.nHexes() - optcounts[0]);		
 		optcounts[0] = g.nHexes() - 7 * Math.round(g.nHexes() * (1 - inputs.waterRatio) / 7.);
 
 		cells = []; adjsx = []; adjsy = []; adjcols = [];
@@ -97,7 +95,7 @@
 		curenergy = waterenergy();
 		
 		// now optimize
-		let nsteps = reallyrunalgo ? inputs.iterations * sizefactor : 0;
+		let nsteps = inputs.iterations * sizefactor;
 		for (let k = 0; k < nsteps; k++) {
 			optimizewater();
 			if ((k + 1) % 100 === 0) {
@@ -107,7 +105,8 @@
 				// Let the browser paint the redraw before optimizing the next batch.
 				await new Promise(requestAnimationFrame);
 			}
-		}		
+		}	
+		console.log("######### water algo report ##########");
 		console.log("cur energy/water energy", curenergy, waterenergy());	//its important to call waterenergy here so the rest of the numbers below are correct
 		console.log("land degrees", landadjs, landadjs.reduce((a, b) => a + b, 0));
 		console.log("water degrees", wateradjs, wateradjs.reduce((a, b) => a + b, 0));
