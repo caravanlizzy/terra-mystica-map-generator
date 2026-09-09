@@ -149,6 +149,7 @@ button.primary:hover:not(:disabled) {
 main {
     flex: 1;
     display: flex;
+    flex-direction: column;
     min-height: 0;
     min-width: 0;
 }
@@ -209,6 +210,63 @@ main {
 .panel > button {
     margin-top: 12px;
     width: 100%;
+}
+
+.global-settings {
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, .45fr);
+    gap: 0 20px;
+    padding: 12px 16px 16px;
+    border-top: 1px solid #ccc;
+    background: var(--panel);
+}
+
+.global-settings:last-child {
+    padding-bottom: 16px;
+}
+
+.global-settings-primary {
+    min-width: 0;
+}
+
+.global-settings .hint {
+    margin-bottom: 8px;
+}
+
+.global-settings-controls {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.global-settings-controls .field-row {
+    width: 156px;
+}
+
+.global-settings-controls > label {
+    width: 180px;
+    margin-top: 0;
+}
+
+.global-settings-controls > button {
+    width: auto;
+    margin-top: 0;
+}
+
+.global-settings-controls .continue-toggle {
+    width: auto;
+}
+
+.global-settings .stats {
+    align-self: end;
+    margin-top: 0;
+}
+
+.global-settings .small {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
 }
 
 .algorithm-inputs {
@@ -498,6 +556,7 @@ main {
 
 #canvasWrap {
     flex: 1;
+    min-height: 0;
     overflow: auto;
     background: #fafafa;
     position: relative;
@@ -655,5 +714,13 @@ svg {
 
     main {
         min-height: 60vh;
+    }
+
+    .global-settings {
+        grid-template-columns: 1fr;
+    }
+
+    .global-settings .stats {
+        margin-top: 12px;
     }
 }

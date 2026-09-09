@@ -57,14 +57,14 @@
     TM.algorithms = TM.algorithms || [];
     TM.algorithms.push({
         id: 'water-random-walk',
-        name: 'Random walk water',
-        label: 'Random walk water',
+        name: 'Random walk',
+        label: 'Random walk',
         target: 'water',
-        description: 'Grows water as short random walks starting from scattered seeds, so the water hexes cluster naturally into rivers and lakes.',
+        description: 'Builds rivers and lakes from random walks.',
         inputs: [
-            { key: 'waterRatio', label: 'Water coverage', min: 0.05, max: 0.6, step: 0.01, value: 0.28 },
-            { key: 'minWalkLength', label: 'Shortest walk', min: 1, max: 12, step: 1, value: 2 },
-            { key: 'maxWalkLength', label: 'Longest walk', min: 1, max: 12, step: 1, value: 5 }
+            { key: 'waterRatio', label: 'Water share', min: 0.05, max: 0.6, step: 0.01, value: 0.28 },
+            { key: 'minWalkLength', label: 'Min walk', min: 1, max: 12, step: 1, value: 2 },
+            { key: 'maxWalkLength', label: 'Max walk', min: 1, max: 12, step: 1, value: 5 }
         ],
         run: randomWalkWater
     });

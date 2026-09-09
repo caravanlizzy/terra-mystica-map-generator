@@ -13,7 +13,7 @@
         id: 'balanced',
         label: 'Balanced random',
         target: 'terrain',
-        description: 'Land hexes are shuffled and split into seven equal-sized bands, one per terrain color. Every color appears roughly the same number of times.',
+        description: 'Distributes terrain colors as evenly as possible.',
         fill(grid) {
             const land = shuffle(grid.landCoordinates());
             const total = land.length;

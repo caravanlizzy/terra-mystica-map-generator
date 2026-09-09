@@ -181,7 +181,7 @@
             dot.style.background = displayColor(value);
             dot.style.left = (50 + WHEEL_RADIUS * Math.cos(angle)) + '%';
             dot.style.top = (50 + WHEEL_RADIUS * Math.sin(angle)) + '%';
-            dot.title = 'Click to select this terrain, then click hexes to apply it. Click a hex again to clear it.';
+            dot.title = 'Select terrain, then click a hex to paint or clear.';
             dot.onclick = () => selectPaintColor(value);
             ring.appendChild(dot);
         });
@@ -192,7 +192,7 @@
         if (state.paintValue === WATER) water.classList.add('selected');
         water.style.left = '50%';
         water.style.top = '50%';
-        water.title = 'Click to select water, then click hexes to turn them into water. Click a water hex again to clear it.';
+        water.title = 'Select water, then click a hex to add or clear it.';
         water.innerHTML = WATER_ICON_SVG;
         water.onclick = () => selectPaintColor(WATER);
         ring.appendChild(water);
@@ -230,8 +230,8 @@
         $('copySnellman').disabled = !terrainGenerated;
         $('exportSnellman').disabled = !terrainGenerated;
         $('exportHint').textContent = terrainGenerated
-            ? 'Terrain colors are set. The terrain map, BGA and snellman formats are ready to export.'
-            : 'Exporting the current layout. Paint or generate colors to also export the terrain map, BGA and snellman formats.';
+            ? 'Terrain ready. Map, BGA, and Snellman exports are available.'
+            : 'Export layout. Paint or generate terrain for BGA and Snellman.';
 
         $('toggleColors').innerHTML = cubeIconSvg(state.showColors);
 
@@ -242,24 +242,24 @@
             selection.innerHTML = '';
             selection.style.background = 'transparent';
             selection.classList.remove('active');
-            selection.title = 'No edit color selected \u2013 pick one on the terrain wheel.';
+            selection.title = 'Select a terrain or water.';
         } else if (state.paintValue === WATER) {
             selection.innerHTML = WATER_ICON_SVG;
             selection.style.background = '#fff';
             selection.classList.add('active');
-            selection.title = 'Water is selected for editing.';
+            selection.title = 'Water selected.';
         } else {
             selection.innerHTML = '';
             selection.style.background = displayColor(state.paintValue);
             selection.classList.add('active');
-            selection.title = 'This terrain color is selected for editing.';
+            selection.title = 'Terrain selected.';
         }
 
         $('paintStatus').textContent = state.paintValue !== null
             ? (state.paintValue === WATER
-                ? 'Water selected \u2013 click hexes to turn them into water. Click a water hex again to clear it.'
-                : 'Terrain selected \u2013 click hexes to apply it. Click a matching hex again to clear it.')
-            : 'Pick a terrain color or the water icon on the wheel, then click hexes to edit them.';
+                ? 'Water selected. Click a hex to add or clear it.'
+                : 'Terrain selected. Click a hex to paint or clear it.')
+            : 'Select terrain or water, then click a hex to edit.';
     }
 
     /* ---------- reading the controls ---------- */
@@ -620,7 +620,7 @@
         const algorithm = getSelectedAlgorithm();
         $('algorithm').title = algorithm && algorithm.description
             ? algorithm.description
-            : 'Which algorithm distributes the terrain colors over the land hexes.';
+            : 'Choose a terrain generator.';
     }
 
     function selectAlgorithm(id) {
