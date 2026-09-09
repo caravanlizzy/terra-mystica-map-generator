@@ -102,7 +102,7 @@
                 optimizewater();
                 if ((k + 1) % 100 === 0) {
                     // Publish this batch to the UI's live grid before redrawing it.
-                    writeCellsToGrid(grid);
+                    writeCellsToGrid();
                     TM.app.renderCurrent();
                     // Let the browser paint the redraw before optimizing the next batch.
                     await new Promise(requestAnimationFrame);
@@ -117,15 +117,15 @@
             console.log("land clusters", landclustern, nlandcluster);
 
             // Publish the final partial batch when nsteps is not divisible by 100.
-            writeCellsToGrid(grid);
+            writeCellsToGrid();
 
             return grid;
         }
 
-        function writeCellsToGrid(grid) {
-            for (let j = 0; j < grid.height; j++) {
-                for (let i = 0; i < grid.rowWidth(j); i++) {
-                    grid.set(i, j, cells[j][i]);
+        function writeCellsToGrid() {
+            for (let j = 0; j < g.height; j++) {
+                for (let i = 0; i < g.rowWidth(j); i++) {
+                    g.set(i, j, cells[j][i]);
                 }
             }
         }
