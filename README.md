@@ -65,8 +65,9 @@ the `inputs` object. Algorithms should read configurable values directly from
 that object (for example, `inputs.iterations`), rather than defining separate
 local defaults. Water algorithms use the same declaration and receive the
 values as `run(grid, inputs)`. They may return a grid or a promise resolving
-to one; async water algorithms can call `TM.app.renderCurrent()` between
-animation frames to redraw the in-progress grid.
+to one. The **Live generation updates** switch controls whether async
+algorithms publish and redraw intermediate grid state; the final result is
+always rendered after generation completes.
 
 ### MapGrid API inside `fill`
 

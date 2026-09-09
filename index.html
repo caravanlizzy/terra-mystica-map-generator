@@ -33,6 +33,11 @@
             </label>
             <button id="newMap">New empty map</button>
             <button id="restoreDefaults" title="Restore all global defaults: map settings, algorithms, sliders, and Continue.">Restore all defaults</button>
+            <label class="continue-toggle" title="When enabled, show the map as an algorithm generates it. Turn this off to update the map only when generation finishes.">
+                <span>Live generation updates</span>
+                <input id="liveGenerationUpdates" type="checkbox" role="switch" checked>
+                <span class="toggle-slider" aria-hidden="true"></span>
+            </label>
 
             <div class="stats">
                 <div class="stat"><span>Width</span><b id="statW">13</b></div>

@@ -71,6 +71,7 @@
         state.algorithmInputs = saved.algorithmInputs;
         state.waterAlgorithmInputs = saved.waterAlgorithmInputs;
         $('continueWater').checked = saved.continueWater;
+        $('liveGenerationUpdates').checked = saved.liveGenerationUpdates;
     }
 
     function saveUiPreferences() {
@@ -82,7 +83,8 @@
             waterAlgorithmId: state.waterAlgorithmId,
             algorithmInputs: state.algorithmInputs,
             waterAlgorithmInputs: state.waterAlgorithmInputs,
-            continueWater: $('continueWater').checked
+            continueWater: $('continueWater').checked,
+            liveGenerationUpdates: $('liveGenerationUpdates').checked
         });
     }
 
@@ -676,6 +678,7 @@
 
         $('randomWater').onclick = runWaterAlgorithm;
         $('continueWater').onchange = saveUiPreferences;
+        $('liveGenerationUpdates').onchange = saveUiPreferences;
 
         $('zoomIn').onclick = () => setZoom(state.zoom * 1.2);
         $('zoomOut').onclick = () => setZoom(state.zoom / 1.2);
@@ -707,7 +710,10 @@
         renderCurrent();
     }
 
-    TM.app = { renderCurrent };
+    TM.app = {
+        renderCurrent,
+        liveGenerationUpdatesEnabled: () => $('liveGenerationUpdates').checked
+    };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

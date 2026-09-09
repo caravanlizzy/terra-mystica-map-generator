@@ -100,7 +100,7 @@
             let nsteps = inputs.iterations * sizefactor;
             for (let k = 0; k < nsteps; k++) {
                 optimizewater();
-                if ((k + 1) % 100 === 0) {
+                if ((k + 1) % 100 === 0 && TM.app.liveGenerationUpdatesEnabled()) {
                     // Publish this batch to the UI's live grid before redrawing it.
                     writeCellsToGrid();
                     TM.app.renderCurrent();

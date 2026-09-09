@@ -188,8 +188,7 @@
 			let noptsteps = inputs.iterations * sizefactor * Math.max(1, sizefactor);
 			for (let k = 0; k < noptsteps; k++) {
 				optimizecolor();
-				//console.log("energy:", curenergy);
-				if ((k + 1) % 100 === 0) {
+				if ((k + 1) % 100 === 0 && TM.app.liveGenerationUpdatesEnabled()) {
 					// Publish this batch to the UI's live grid before redrawing it.
 					writeCellsToGrid(grid);
 					TM.app.renderCurrent();

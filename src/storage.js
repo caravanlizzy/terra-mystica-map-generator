@@ -49,7 +49,8 @@
                 : null,
             algorithmInputs: savedInputGroups(saved.algorithmInputs),
             waterAlgorithmInputs: savedInputGroups(saved.waterAlgorithmInputs),
-            continueWater: saved.continueWater === true
+            continueWater: saved.continueWater === true,
+            liveGenerationUpdates: saved.liveGenerationUpdates !== false
         };
     }
 
