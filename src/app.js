@@ -1,8 +1,9 @@
 /*
  * Application controller: wires the DOM controls to the services and renderer.
  *
- * Two modes: 'edit' draws the water layout (a click toggles land / water) and
- * 'colored' shows terrain colors (click two land hexes to swap them).
+ * A single unified view: the map always shows terrain colors. Clicking a hex
+ * toggles it between water and land; colors are only ever changed through the
+ * terrain wheel (pick a color, then click hexes to paint them).
  */
 (function (TM) {
     'use strict';
@@ -14,9 +15,9 @@
     const $ = (id) => document.getElementById(id);
 
     const state = {
-        mode: 'edit',        // 'edit' | 'colored'
         grid: new TM.MapGrid({ width: 13, height: 9, form: 0 }),
-        selected: [],        // [[x, y], ...] land hexes picked for a swap
+        paintValue: null,    // terrain value picked on the wheel to paint hexes with
+        showColors: true,    // when off, terrain colors are hidden so only water is shown
         algorithmId: null,   // the terrain algorithm chosen in the header
         waterAlgorithmId: null, // the water algorithm chosen in the map editor
         algorithmInputs: {}, // { algorithmId: { inputKey: value } }
@@ -29,6 +30,33 @@
     const ZOOM_MAX = 4;
 
     const WHEEL_RADIUS = 35;   // terrain wheel: distance from center, in %
+
+    // Compact "approximately equals" wave symbol for the wheel center, matching
+    // the water icon used before (two short stacked waves close together).
+    const WATER_ICON_SVG =
+        '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<path d="M 7 10 Q 9.5 7.5 12 10 T 17 10 M 7 14 Q 9.5 11.5 12 14 T 17 14" ' +
+        'fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round"/>' +
+        '</svg>';
+
+    // Cube icon for the zoom-window color toggle. When colors are shown the four
+    // right-hand faces are colored; when colors are hidden they turn black/white
+    // so the icon itself reflects the current state (no background highlight).
+    function cubeIconSvg(colored) {
+        const blue = colored ? '#3a6ff2' : '#fff';
+        const green = colored ? '#4aa03f' : '#000';
+        const red = colored ? '#e2373a' : '#fff';
+        const yellow = colored ? '#f2e33f' : '#000';
+        return '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+            '<polygon points="12,2 12,12 3.3,7" fill="#fff"/>' +
+            '<polygon points="3.3,7 12,12 12,22 3.3,17" fill="#2b2b2b"/>' +
+            '<polygon points="12,2 20.7,7 12,12" fill="' + blue + '"/>' +
+            '<polygon points="20.7,7 20.7,12 12,12" fill="' + green + '"/>' +
+            '<polygon points="20.7,12 20.7,17 12,12" fill="' + red + '"/>' +
+            '<polygon points="20.7,17 12,22 12,12" fill="' + yellow + '"/>' +
+            '<polygon points="12,2 20.7,7 20.7,17 12,22 3.3,17 3.3,7" fill="none" stroke="#333" stroke-width="1.25"/>' +
+            '</svg>';
+    }
 
     function restoreUiPreferences() {
         const saved = TM.storage.loadUiPreferences();
@@ -66,10 +94,15 @@
             .some(([nx, ny]) => state.grid.isWaterAt(nx, ny));
     }
 
-    function editCell(x, y) {
-        const isWater = state.grid.isWaterAt(x, y);
+    // A single cell description for every hex: assigned terrain shows its color,
+    // water and not-yet-colored land render as plain white (the water look comes
+    // from the renderer omitting grid lines between adjacent water hexes).
+    function cellFor(x, y) {
+        const value = state.grid.get(x, y);
+        const isWater = value === WATER;
+        const hasColor = state.showColors && value !== WATER && value !== UNASSIGNED;
         return {
-            fill: '#ffffff',
+            fill: hasColor ? displayColor(value) : '#ffffff',
             stroke: '#222',
             strokeWidth: 2,
             isWater,
@@ -77,63 +110,28 @@
         };
     }
 
-    function coloredCell(x, y) {
-        const value = state.grid.get(x, y);
-        const isWater = value === WATER;
-        return {
-            fill: displayColor(value),
-            stroke: '#333',
-            strokeWidth: 2,
-            isWater,
-            selected: state.selected.some(([sx, sy]) => sx === x && sy === y),
-            marker: isSingleWater(x, y) ? 'water' : null
-        };
-    }
-
-    function onEditClick(x, y) {
-        state.selected = [];
+    // Editing requires a selection on the wheel first (a terrain color, or the
+    // water icon in the center). Clicking a hex applies the selected value;
+    // clicking a hex that already holds it clears the hex back to unassigned.
+    function onHexClick(x, y) {
+        if (state.paintValue === null) return;
         $('preset').value = '';
-        state.grid.set(x, y, state.grid.isWaterAt(x, y) ? UNASSIGNED : WATER);
+        const next = state.grid.get(x, y) === state.paintValue ? UNASSIGNED : state.paintValue;
+        state.grid.set(x, y, next);
         renderCurrent();
-    }
-
-    function onColoredClick(x, y) {
-        if (state.grid.get(x, y) === WATER) return; // water cannot be swapped
-
-        const index = state.selected.findIndex(([sx, sy]) => sx === x && sy === y);
-        if (index >= 0) {
-            state.selected.splice(index, 1); // click again to deselect
-            renderCurrent();
-            return;
-        }
-
-        state.selected.push([x, y]);
-        if (state.selected.length === 2) {
-            swapSelected();
-        }
-        renderCurrent();
-    }
-
-    function swapSelected() {
-        const [[ax, ay], [bx, by]] = state.selected;
-        const a = state.grid.get(ax, ay);
-        state.grid.set(ax, ay, state.grid.get(bx, by));
-        state.grid.set(bx, by, a);
-        state.selected = [];
     }
 
     function renderCurrent() {
-        const colored = state.mode === 'colored';
         state.lastSize = TM.renderer.render(svg, {
             width: state.grid.width,
             height: state.grid.height,
             form: state.grid.form,
-            cellFor: colored ? coloredCell : editCell,
-            onClick: colored ? onColoredClick : onEditClick
+            cellFor,
+            onClick: onHexClick
         });
         applyZoom();
         updateStats();
-        updateModeUi();
+        updateUi();
     }
 
     /* ---------- zoom ---------- */
@@ -177,14 +175,36 @@
             const angle = (i * step - 90) * Math.PI / 180;
             const dot = document.createElement('div');
             dot.className = 'wheel-dot';
+            if (value === state.paintValue) dot.classList.add('selected');
             dot.style.background = displayColor(value);
             dot.style.left = (50 + WHEEL_RADIUS * Math.cos(angle)) + '%';
             dot.style.top = (50 + WHEEL_RADIUS * Math.sin(angle)) + '%';
+            dot.title = 'Click to select this terrain, then click hexes to apply it. Click a hex again to clear it.';
+            dot.onclick = () => selectPaintColor(value);
             ring.appendChild(dot);
         });
+
+        // The water icon sits in the center: selecting it paints water instead.
+        const water = document.createElement('div');
+        water.className = 'wheel-dot wheel-water';
+        if (state.paintValue === WATER) water.classList.add('selected');
+        water.style.left = '50%';
+        water.style.top = '50%';
+        water.title = 'Click to select water, then click hexes to turn them into water. Click a water hex again to clear it.';
+        water.innerHTML = WATER_ICON_SVG;
+        water.onclick = () => selectPaintColor(WATER);
+        ring.appendChild(water);
     }
 
-    /* ---------- stats & mode UI ---------- */
+    // Pick a wheel value to edit with (a terrain color or water); clicking the
+    // active one clears the selection.
+    function selectPaintColor(value) {
+        state.paintValue = state.paintValue === value ? null : value;
+        renderColorWheel();
+        renderCurrent();
+    }
+
+    /* ---------- stats & UI ---------- */
 
     function updateStats() {
         const total = state.grid.nHexes();
@@ -201,35 +221,43 @@
             .some(([x, y]) => state.grid.get(x, y) !== UNASSIGNED);
     }
 
-    function updateModeUi() {
-        const colored = state.mode === 'colored';
+    function updateUi() {
         const terrainGenerated = hasTerrain();
-        $('editHint').style.display = terrainGenerated ? 'none' : 'block';
-        $('swapHint').style.display = terrainGenerated ? 'block' : 'none';
-        // The BGA and snellman formats only exist once colors are generated.
-        $('copyBga').disabled = !colored;
-        $('copySnellman').disabled = !colored;
-        $('exportSnellman').disabled = !colored;
-        // Layout editing is only meaningful in edit mode.
-        $('randomWater').disabled = colored;
-        $('continueWater').disabled = colored;
-        $('resetWater').disabled = colored;
-        $('toggleTerrain').disabled = !terrainGenerated;
-        $('toggleTerrain').setAttribute('aria-pressed', String(colored));
-        $('toggleTerrain').setAttribute('aria-label', colored ? 'Show river layout' : 'Show terrain colors');
-        $('toggleTerrain').title = colored ? 'Show river layout' : 'Show terrain colors';
-        $('generateColors').textContent = 'Generate colors';
+        // The BGA and snellman formats only exist once colors are set.
+        $('copyBga').disabled = !terrainGenerated;
+        $('copySnellman').disabled = !terrainGenerated;
+        $('exportSnellman').disabled = !terrainGenerated;
         $('exportHint').textContent = terrainGenerated
-            ? 'Terrain colors are available. Switch to terrain view to export the terrain map, BGA or snellman format.'
-            : 'Exporting the current layout. Generate colors to also export the terrain map, BGA and snellman formats.';
+            ? 'Terrain colors are set. The terrain map, BGA and snellman formats are ready to export.'
+            : 'Exporting the current layout. Paint or generate colors to also export the terrain map, BGA and snellman formats.';
 
-        if (terrainGenerated) {
-            $('swapStatus').textContent = colored && state.selected.length === 1
-                ? 'One hex selected – click a second land hex to swap.'
-                : 'In terrain view, click two land hexes to swap them.';
+        $('toggleColors').innerHTML = cubeIconSvg(state.showColors);
+
+        // Mirror the current wheel selection in the zoom box so the active edit
+        // color (or the water icon) is always visible next to the map.
+        const selection = $('selectionColor');
+        if (state.paintValue === null) {
+            selection.innerHTML = '';
+            selection.style.background = 'transparent';
+            selection.classList.remove('active');
+            selection.title = 'No edit color selected \u2013 pick one on the terrain wheel.';
+        } else if (state.paintValue === WATER) {
+            selection.innerHTML = WATER_ICON_SVG;
+            selection.style.background = '#fff';
+            selection.classList.add('active');
+            selection.title = 'Water is selected for editing.';
         } else {
-            $('swapStatus').textContent = '';
+            selection.innerHTML = '';
+            selection.style.background = displayColor(state.paintValue);
+            selection.classList.add('active');
+            selection.title = 'This terrain color is selected for editing.';
         }
+
+        $('paintStatus').textContent = state.paintValue !== null
+            ? (state.paintValue === WATER
+                ? 'Water selected \u2013 click hexes to turn them into water. Click a water hex again to clear it.'
+                : 'Terrain selected \u2013 click hexes to apply it. Click a matching hex again to clear it.')
+            : 'Pick a terrain color or the water icon on the wheel, then click hexes to edit them.';
     }
 
     /* ---------- reading the controls ---------- */
@@ -245,17 +273,13 @@
 
     /* ---------- actions ---------- */
 
-    function enterEditMode(clearPreset) {
-        state.mode = 'edit';
-        state.selected = [];
-        if (clearPreset) {
-            $('preset').value = '';
-        }
+    function clearPreset() {
+        $('preset').value = '';
     }
 
     function newEmptyMap() {
         state.grid = new TM.MapGrid(readDimensions());
-        enterEditMode(true);
+        clearPreset();
         renderCurrent();
         saveUiPreferences();
     }
@@ -266,7 +290,7 @@
     // UNASSIGNED). Unlike "New empty map" this never wipes the current layout.
     function resizeGridPreserving(dimensions) {
         state.grid = new TM.MapGrid({ ...dimensions, cells: state.grid.toGrid() });
-        enterEditMode(true);
+        clearPreset();
         renderCurrent();
         saveUiPreferences();
     }
@@ -281,14 +305,12 @@
     // typed but not applied stays unapplied.
     function resetGrid() {
         state.grid.reset();
-        enterEditMode(true);
+        clearPreset();
         renderCurrent();
     }
 
     function applyLayout(layout) {
         state.grid = new TM.MapGrid(layout);
-        state.mode = hasTerrain() ? 'colored' : 'edit';
-        state.selected = [];
         $('width').value = state.grid.width;
         $('height').value = state.grid.height;
         $('form').value = state.grid.form;
@@ -311,7 +333,7 @@
         // Make the working grid current before the algorithm can yield and
         // request a redraw through TM.app.renderCurrent().
         state.grid = grid;
-        enterEditMode(true);
+        clearPreset();
         const layout = await TM.layout.randomizeWater(
             grid,
             state.waterAlgorithmId,
@@ -387,13 +409,17 @@
         return water.find(a => a.id === state.waterAlgorithmId) || water[0];
     }
 
+    // The zoom-window icon toggles terrain colors on/off (water-only view).
+    function toggleColorsFromIcon() {
+        state.showColors = !state.showColors;
+        renderCurrent();
+    }
+
     function generateColors() {
         readDimensions();
         const grid = state.grid;
         const algorithm = getSelectedAlgorithm();
         grid.generate(algorithm, inputValues(algorithm, state.algorithmInputs));
-        state.selected = [];
-        state.mode = 'colored';
         renderCurrent();
     }
 
@@ -438,7 +464,7 @@
 
     function mapData() {
         return TM.export.toJson({
-            mode: state.mode,
+            mode: hasTerrain() ? 'colored' : 'edit',
             grid: state.grid,
             algorithmId: state.algorithmId
         });
@@ -523,8 +549,8 @@
         $('algorithm').value = state.algorithmId || '';
         describeSelectedAlgorithm();
         renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs);
-        // Switching on a colored map re-runs it, so the effect is visible at once.
-        if (state.mode === 'colored') generateColors();
+        // If the map is already colored, re-run so the effect is visible at once.
+        if (hasTerrain()) generateColors();
         saveUiPreferences();
     }
 
@@ -538,22 +564,15 @@
         $('newMap').onclick = newEmptyMap;
         $('restoreDefaults').onclick = restoreDefaults;
         $('generateColors').onclick = generateColors;
+        $('toggleColors').onclick = toggleColorsFromIcon;
 
         $('preset').onchange = (event) => {
             const layout = TM.layout.getPreset(event.target.value);
             if (layout) {
                 applyLayout(layout);
             } else {
-                enterEditMode(true);
                 renderCurrent();
             }
-        };
-
-        $('toggleTerrain').onclick = () => {
-            if (!hasTerrain()) return;
-            state.mode = state.mode === 'colored' ? 'edit' : 'colored';
-            state.selected = [];
-            renderCurrent();
         };
 
         $('form').onchange = () => {
@@ -591,16 +610,16 @@
             feedback($('copyJson'), 'Copied!');
         };
         $('copyBga').onclick = async () => {
-            if (state.mode !== 'colored' || !state.grid) return;
+            if (!hasTerrain() || !state.grid) return;
             await navigator.clipboard.writeText(TM.export.bgaFormat(state.grid));
             feedback($('copyBga'), 'Copied!');
         };
         $('exportSnellman').onclick = () => {
-            if (state.mode !== 'colored' || !state.grid) return;
+            if (!hasTerrain() || !state.grid) return;
             download('terra-mystica-map.snellman.txt', TM.export.snellmanFormat(state.grid), 'text/plain');
         };
         $('copySnellman').onclick = async () => {
-            if (state.mode !== 'colored' || !state.grid) return;
+            if (!hasTerrain() || !state.grid) return;
             await navigator.clipboard.writeText(TM.export.snellmanFormat(state.grid));
             feedback($('copySnellman'), 'Copied!');
         };

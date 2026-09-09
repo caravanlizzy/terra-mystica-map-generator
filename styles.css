@@ -312,6 +312,26 @@ main {
     border-radius: 50%;
     transform: translate(-50%, -50%);
     border: 1px solid rgba(0, 0, 0, .18);
+    cursor: pointer;
+}
+
+.wheel-dot.selected {
+    border: 2px solid #111;
+    box-shadow: 0 0 0 3px rgba(21, 101, 192, .55);
+}
+
+.wheel-water {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+}
+
+.wheel-water svg {
+    width: 70%;
+    height: 70%;
+    margin: 0;
+    display: block;
 }
 
 .actions {
@@ -463,7 +483,7 @@ main {
     font-size: 11px;
 }
 
-#swapStatus {
+#paintStatus {
     font-size: 12px;
     color: #333;
     margin-top: 8px;
@@ -507,9 +527,9 @@ main {
     right: 12px;
     z-index: 5;
     display: flex;
-    gap: 4px;
+    gap: 3px;
     align-items: center;
-    padding: 4px;
+    padding: 3px;
     background: rgba(255, 255, 255, .92);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -517,34 +537,60 @@ main {
 }
 
 .zoom-controls button {
-    height: 28px;
-    min-width: 28px;
-    padding: 0 8px;
-    font-size: 15px;
+    height: 24px;
+    min-width: 24px;
+    padding: 0 6px;
+    font-size: 13px;
     line-height: 1;
 }
 
-.zoom-controls .terrain-toggle {
-    padding: 3px;
+.icon-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    min-width: 0;
+    width: 26px;
+    border: none;
+    background: transparent;
 }
 
-.terrain-toggle svg {
-    display: block;
-    width: 20px;
-    height: 20px;
+.icon-toggle svg {
+    width: 24px;
+    height: 24px;
     margin: 0;
+    display: block;
 }
 
-.terrain-toggle[aria-pressed=true] {
-    background: #dcecff;
-    border-color: var(--accent);
+.selection-color {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6);
 }
+
+.selection-color:not(.active) {
+    border-style: dashed;
+    opacity: .5;
+}
+
+.selection-color svg {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    display: block;
+}
+
 
 .zoom-level {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #444;
-    min-width: 42px;
+    min-width: 34px;
     text-align: center;
 }
 

@@ -80,29 +80,27 @@
                 <span id="zoomLevel" class="zoom-level" title="Current zoom">100%</span>
                 <button id="zoomIn" title="Zoom in">+</button>
                 <button id="zoomFit" title="Fit the whole map into view">Fit</button>
-                <button id="toggleTerrain" class="terrain-toggle" disabled aria-label="Show terrain colors" aria-pressed="false" title="Show terrain colors">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <polygon points="12,2 12,12 3.3,7" fill="#fff"/>
-                        <polygon points="3.3,7 12,12 12,22 3.3,17" fill="#2b2b2b"/>
-                        <polygon points="12,2 20.7,7 12,12" fill="#3a6ff2"/>
-                        <polygon points="20.7,7 20.7,12 12,12" fill="#4aa03f"/>
-                        <polygon points="20.7,12 20.7,17 12,12" fill="#e2373a"/>
-                        <polygon points="20.7,17 12,22 12,12" fill="#f2e33f"/>
-                        <polygon points="12,2 20.7,7 20.7,17 12,22 3.3,17 3.3,7" fill="none" stroke="#333" stroke-width="1.25"/>
-                    </svg>
-                </button>
+                <button id="toggleColors" class="icon-toggle" title="Show/hide terrain colors (show the water layout only)."></button>
+                <span id="selectionColor" class="selection-color" title="Current edit selection"></span>
             </div>
             <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Hex map"></svg>
         </section>
     </main>
 
     <aside class="sidebar sidebar-right">
-        <!-- Step 3: distribute terrain colors and fine-tune them by swapping hexes. -->
+        <!-- Reference: the terrain wheel, drawn from the live display colors. -->
+        <section class="panel step">
+            <h2 class="panel-title">Terrain wheel</h2>
+            <div id="colorWheel" class="wheel-ring"></div>
+        </section>
+
+        <!-- Step 3: distribute terrain colors, or paint them by hand from the wheel. -->
         <section class="panel step">
             <h2 class="panel-title">3. Terrain</h2>
             <p class="hint">
-                Choose a terrain algorithm and generate the colors. You can regenerate or
-                swap hexes afterwards without losing the water layout.
+                Choose a terrain algorithm and generate the colors, or edit hexes by hand:
+                pick a terrain color (or the water icon in the wheel's center) and click hexes
+                to apply it. Clicking a hex that already holds the selected value clears it.
             </p>
             <label title="Which algorithm distributes the terrain colors over the land hexes.">Terrain algorithm
                 <select id="algorithm"></select>
@@ -111,17 +109,7 @@
             <div class="actions">
                 <button class="primary" id="generateColors">Generate colors</button>
             </div>
-            <p class="hint" id="swapHint" style="display:none">
-                Terrain colors are available. In terrain view, click <b>exactly two land hexes</b>
-                to swap them (water hexes cannot be swapped).
-            </p>
-            <div id="swapStatus"></div>
-        </section>
-
-        <!-- Reference: the terrain wheel, drawn from the live display colors. -->
-        <section class="panel step">
-            <h2 class="panel-title">Terrain wheel</h2>
-            <div id="colorWheel" class="wheel-ring"></div>
+            <div id="paintStatus"></div>
         </section>
 
         <!-- Step 4: export the current map. -->
