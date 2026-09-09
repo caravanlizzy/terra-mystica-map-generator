@@ -70,6 +70,7 @@
         state.waterAlgorithmId = saved.waterAlgorithmId;
         state.algorithmInputs = saved.algorithmInputs;
         state.waterAlgorithmInputs = saved.waterAlgorithmInputs;
+        $('continueTerrain').checked = saved.continueTerrain;
         $('continueWater').checked = saved.continueWater;
         $('liveGenerationUpdates').checked = saved.liveGenerationUpdates;
     }
@@ -83,6 +84,7 @@
             waterAlgorithmId: state.waterAlgorithmId,
             algorithmInputs: state.algorithmInputs,
             waterAlgorithmInputs: state.waterAlgorithmInputs,
+            continueTerrain: $('continueTerrain').checked,
             continueWater: $('continueWater').checked,
             liveGenerationUpdates: $('liveGenerationUpdates').checked
         });
@@ -265,8 +267,8 @@
     /* ---------- reading the controls ---------- */
 
     function readDimensions() {
-        const width = Math.max(1, Math.min(40, +$('width').value || 13));
-        const height = Math.max(1, Math.min(40, +$('height').value || 9));
+        const width = Math.max(1, +$('width').value || 13);
+        const height = Math.max(1, +$('height').value || 9);
         const form = +$('form').value === 1 ? 1 : 0;
         $('width').value = width;
         $('height').value = height;
@@ -299,6 +301,8 @@
 
     function restoreDefaults() {
         TM.storage.clearUiPreferences();
+        $('continueTerrain').checked = false;
+        $('continueWater').checked = false;
         window.location.reload();
     }
 
@@ -349,7 +353,7 @@
             grid,
             state.waterAlgorithmId,
             inputs,
-            { cont: continueFromCurrentLayout ? 1 : 0 }
+            { continueFromCurrentLayout }
         );
         state.grid = layout;
         renderCurrent();
@@ -496,10 +500,15 @@
         readDimensions();
         const grid = state.grid;
         const algorithm = getSelectedAlgorithm();
+        const inputs = inputValues(algorithm, state.algorithmInputs);
         // Make the working grid current before the algorithm can yield and
         // request a redraw through TM.app.renderCurrent().
         state.grid = grid;
-        await grid.generate(algorithm, inputValues(algorithm, state.algorithmInputs));
+        await grid.generate(
+            algorithm,
+            inputs,
+            { continueFromCurrentLayout: $('continueTerrain').checked }
+        );
         renderCurrent();
     }
 
@@ -586,7 +595,7 @@
         // Nothing to choose with one algorithm, but keep it visible.
         select.disabled = algorithms.length < 2;
         describeSelectedAlgorithm();
-        renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs, 'terrainContinueSlot');
+        renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs);
     }
 
     function fillWaterAlgorithmDropdown() {
@@ -628,7 +637,7 @@
         if (found) state.algorithmId = id;
         $('algorithm').value = state.algorithmId || '';
         describeSelectedAlgorithm();
-        renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs, 'terrainContinueSlot');
+        renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs);
         // If the map is already colored, re-run so the effect is visible at once.
         if (hasTerrain()) generateColors();
         saveUiPreferences();
@@ -677,6 +686,7 @@
         $('resetWater').onclick = resetGrid;
 
         $('randomWater').onclick = runWaterAlgorithm;
+        $('continueTerrain').onchange = saveUiPreferences;
         $('continueWater').onchange = saveUiPreferences;
         $('liveGenerationUpdates').onchange = saveUiPreferences;
 

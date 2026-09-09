@@ -3,7 +3,7 @@
  *
  * A water-target algorithm is a plain object:
  *
- *   { id, name, label, target: 'water', description, inputs, run(grid, inputs) }
+ *   { id, name, label, target: 'water', description, inputs, run(grid, inputs, options) }
  *
  * `run` receives and updates a MapGrid, then returns it. It is picked up automatically by the water select in the
  * UI because it registers itself in the shared TM.algorithms registry.
@@ -22,7 +22,7 @@
 
     // A random layout, grown as short random walks so the water hexes cluster
     // naturally.
-    function randomWalkWater(grid, inputs) {
+    function randomWalkWater(grid, inputs, options) {
         const shortestWalk = Math.min(inputs.minWalkLength, inputs.maxWalkLength);
         const longestWalk = Math.max(inputs.minWalkLength, inputs.maxWalkLength);
         const target = Math.round(TM.totalHexes(grid.width, grid.height, grid.form) * inputs.waterRatio);

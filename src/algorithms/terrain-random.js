@@ -69,10 +69,9 @@
         target: 'terrain',
         description: 'Every land hex gets a uniformly random terrain color, independent of its neighbors.',
         inputs: [
-            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 30000, step: 1000, value: 0 },
-            { key: 'cont', label: 'Continue', type: 'switch', value: 0 }
+            { key: 'iterations', label: 'Optimisation steps', min: 0, max: 30000, step: 1000, value: 0 }
         ],
-        async fill(grid, inputs) {
+        async fill(grid, inputs, options = {}) {
 			// ######################### variables we need while running the algorithm and dont want to pass around the whole time
 			let g = grid; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
 			let sizefactor = g.nHexes() / 113.;
@@ -137,7 +136,7 @@
 				clusterscan.push([]);
 				for (let i = 0; i < grid.rowWidth(j); i++) {
 					let col = 0;
-					if (inputs.cont == 0) {
+					if (!options.continueFromCurrentLayout) {
 						if (g.get(i,j) !== 0) col = 1 + rndint(7);
 					} else {
 						col = g.get(i,j);

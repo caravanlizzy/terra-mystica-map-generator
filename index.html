@@ -44,19 +44,7 @@
     </aside>
 
     <main>
-        <section id="canvasWrap">
-            <div class="zoom-controls">
-                <button id="zoomOut" title="Zoom out">&minus;</button>
-                <span id="zoomLevel" class="zoom-level" title="Current zoom">100%</span>
-                <button id="zoomIn" title="Zoom in">+</button>
-                <button id="zoomFit" title="Fit map">Fit</button>
-                <button id="toggleColors" class="icon-toggle" title="Toggle terrain colors"></button>
-                <span id="selectionColor" class="selection-color" title="Selected edit value"></span>
-            </div>
-            <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Hex map"></svg>
-        </section>
-
-        <!-- Global map settings remain visible below the workspace. -->
+        <!-- Global map settings remain visible above the workspace. -->
         <section class="panel global-settings">
             <div class="global-settings-primary">
                 <h2 class="panel-title">Global settings</h2>
@@ -93,6 +81,19 @@
             </div>
             <p class="small">Zero-based coordinates. Rows alternate between full and one-short.</p>
         </section>
+
+        <section id="canvasWrap">
+            <div class="zoom-controls">
+                <button id="zoomOut" title="Zoom out">&minus;</button>
+                <span id="zoomLevel" class="zoom-level" title="Current zoom">100%</span>
+                <button id="zoomIn" title="Zoom in">+</button>
+                <button id="zoomFit" title="Fit map">Fit</button>
+                <button id="toggleColors" class="icon-toggle" title="Toggle terrain colors"></button>
+                <span id="selectionColor" class="selection-color" title="Selected edit value"></span>
+            </div>
+            <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Hex map"></svg>
+        </section>
+
     </main>
 
     <aside class="sidebar sidebar-right">
@@ -114,7 +115,11 @@
             <div id="algorithmInputs" class="algorithm-inputs" aria-live="polite"></div>
             <div class="actions-grid">
                 <button class="primary" id="generateColors">Generate</button>
-                <div id="terrainContinueSlot" class="continue-slot"></div>
+                <label class="continue-toggle" title="Refine the current terrain when generating.">
+                    <span>Continue</span>
+                    <input id="continueTerrain" type="checkbox" role="switch">
+                    <span class="toggle-slider" aria-hidden="true"></span>
+                </label>
                 <button id="resetTerrain" class="reset-action" title="Clear terrain and keep water.">Reset terrain</button>
             </div>
             <div id="paintStatus"></div>
