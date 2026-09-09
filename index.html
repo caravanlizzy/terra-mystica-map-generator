@@ -7,20 +7,12 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header>
-    <h1>Terra Mystica Map Layout Tool</h1>
-    <span class="small version">v1.0.0</span>
-</header>
-
 <!-- Two sidebars flank the map: left drives size + water, right handles terrain + export. -->
 <div class="layout">
     <aside class="sidebar sidebar-left">
         <!-- Build the water layout from a preset, an algorithm, or by hand. -->
         <section class="panel step">
             <h2 class="panel-title">Water layout</h2>
-            <p class="hint" id="editHint">
-                Generate a layout, or enable Continue to refine it. Click hexes to edit.
-            </p>
             <label>Preset
                 <select id="preset">
                     <option value="">&mdash; none &mdash;</option>
@@ -38,51 +30,44 @@
                 </label>
                 <button id="resetWater" class="reset-action" title="Clear water and keep map size and form.">Reset layout</button>
             </div>
-            <p class="water-settings-title">Generation settings</p>
             <div id="waterAlgorithmInputs" class="algorithm-inputs" aria-live="polite"></div>
+        </section>
+        <section class="panel map-stats">
+            <h2 class="panel-title">Map stats</h2>
+            <div class="stats">
+                <div class="stat"><span>Hexes</span><b id="statTotal">117</b></div>
+                <div class="stat"><span>Land</span><b id="statLand">117</b></div>
+                <div class="stat"><span>Water</span><b id="statWater">0</b></div>
+            </div>
         </section>
     </aside>
 
     <main>
         <!-- Global map settings remain visible above the workspace. -->
         <section class="panel global-settings">
-            <div class="global-settings-primary">
-                <h2 class="panel-title">Global settings</h2>
-                <p class="hint">
-                    Set map size and form. Size updates immediately.
-                </p>
-                <div class="global-settings-controls">
-                    <div class="field-row">
-                        <label>Width (X)<input id="width" type="number" min="1" max="40" value="13"></label>
-                        <label>Height (Y)<input id="height" type="number" min="1" max="40" value="9"></label>
-                    </div>
-                    <label>Form
-                        <select id="form">
-                            <option value="0">0 &ndash; top row longer</option>
-                            <option value="1">1 &ndash; top row shorter</option>
-                        </select>
-                    </label>
-                    <button id="newMap">New empty map</button>
-                    <button id="restoreDefaults" title="Reset all settings">Restore defaults</button>
-                    <label class="continue-toggle" title="Show progress while generating.">
-                        <span>Live updates</span>
-                        <input id="liveGenerationUpdates" type="checkbox" role="switch" checked>
-                        <span class="toggle-slider" aria-hidden="true"></span>
-                    </label>
+            <div class="global-settings-controls">
+                <div class="field-row">
+                    <label>Width (X)<input id="width" type="number" min="1" max="40" value="13"></label>
+                    <label>Height (Y)<input id="height" type="number" min="1" max="40" value="9"></label>
                 </div>
+                <label>Form
+                    <select id="form">
+                        <option value="0">0 &ndash; top row longer</option>
+                        <option value="1">1 &ndash; top row shorter</option>
+                    </select>
+                </label>
+                <button id="newMap">New empty map</button>
+                <button id="restoreDefaults" title="Reset all settings">Restore defaults</button>
+                <label class="continue-toggle" title="Show progress while generating.">
+                    <span>Live updates</span>
+                    <input id="liveGenerationUpdates" type="checkbox" role="switch" checked>
+                    <span class="toggle-slider" aria-hidden="true"></span>
+                </label>
             </div>
-            <div class="stats">
-                <div class="stat"><span>Width</span><b id="statW">13</b></div>
-                <div class="stat"><span>Height</span><b id="statH">9</b></div>
-                <div class="stat"><span>Form</span><b id="statForm">0</b></div>
-                <div class="stat"><span>Hexes</span><b id="statTotal">117</b></div>
-                <div class="stat"><span>Land</span><b id="statLand">117</b></div>
-                <div class="stat"><span>Water</span><b id="statWater">0</b></div>
-            </div>
-            <p class="small">Zero-based coordinates. Rows alternate between full and one-short.</p>
         </section>
 
         <section id="canvasWrap">
+            <div class="map-title">Terra Mystica Map Layout Tool <span>v1.0.0</span></div>
             <div class="zoom-controls">
                 <button id="zoomOut" title="Zoom out">&minus;</button>
                 <span id="zoomLevel" class="zoom-level" title="Current zoom">100%</span>
@@ -106,9 +91,6 @@
         <!-- Distribute terrain colors, or paint them by hand from the wheel. -->
         <section class="panel step">
             <h2 class="panel-title">Terrain</h2>
-            <p class="hint">
-                Generate terrain, or select a wheel color and click hexes to paint. Click again to clear.
-            </p>
             <label title="Choose a terrain generator.">Generator
                 <select id="algorithm"></select>
             </label>
@@ -122,13 +104,11 @@
                 </label>
                 <button id="resetTerrain" class="reset-action" title="Clear terrain and keep water.">Reset terrain</button>
             </div>
-            <div id="paintStatus"></div>
         </section>
 
         <!-- Export the current map. -->
         <section class="panel step export" id="exportSection">
             <h2 class="panel-title">Export</h2>
-            <p class="export-hint" id="exportHint">Export layout. Generate terrain for BGA and Snellman.</p>
             <div class="export-group">
                 <span class="export-label">Download</span>
                 <div class="export-buttons">

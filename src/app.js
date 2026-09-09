@@ -212,9 +212,6 @@
 
     function updateStats() {
         const total = state.grid.nHexes();
-        $('statW').textContent = state.grid.width;
-        $('statH').textContent = state.grid.height;
-        $('statForm').textContent = state.grid.form;
         $('statTotal').textContent = total;
         $('statLand').textContent = total - state.grid.count(WATER);
         $('statWater').textContent = state.grid.count(WATER);
@@ -231,9 +228,6 @@
         $('copyBga').disabled = !terrainGenerated;
         $('copySnellman').disabled = !terrainGenerated;
         $('exportSnellman').disabled = !terrainGenerated;
-        $('exportHint').textContent = terrainGenerated
-            ? 'Terrain ready. Map, BGA, and Snellman exports are available.'
-            : 'Export layout. Paint or generate terrain for BGA and Snellman.';
 
         $('toggleColors').innerHTML = cubeIconSvg(state.showColors);
 
@@ -257,11 +251,6 @@
             selection.title = 'Terrain selected.';
         }
 
-        $('paintStatus').textContent = state.paintValue !== null
-            ? (state.paintValue === WATER
-                ? 'Water selected. Click a hex to add or clear it.'
-                : 'Terrain selected. Click a hex to paint or clear it.')
-            : 'Select terrain or water, then click a hex to edit.';
     }
 
     /* ---------- reading the controls ---------- */

@@ -23,29 +23,6 @@ body {
     overflow: hidden;
 }
 
-header {
-    padding: 14px 18px;
-    border-bottom: 1px solid #ccc;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
-    display: flex;
-    gap: 18px;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    flex: none;
-}
-
-header .version {
-    margin: 0;
-}
-
-header h1 {
-    font-size: 18px;
-    margin: 0;
-    font-weight: 700;
-    letter-spacing: -.01em;
-}
-
 .controls {
     display: flex;
     gap: 12px;
@@ -214,31 +191,23 @@ main {
 
 .global-settings {
     flex: none;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(180px, .45fr);
-    gap: 0 20px;
-    padding: 12px 16px 16px;
+    display: flex;
+    align-items: end;
+    padding: 8px 16px;
     border-bottom: 1px solid #ccc;
     background: var(--panel);
+    overflow-x: auto;
 }
 
 .global-settings:first-child {
-    padding-top: 12px;
-}
-
-.global-settings-primary {
-    min-width: 0;
-}
-
-.global-settings .hint {
-    margin-bottom: 8px;
+    padding-top: 8px;
 }
 
 .global-settings-controls {
     display: flex;
     gap: 10px;
     align-items: end;
-    flex-wrap: wrap;
+    flex: none;
 }
 
 .global-settings-controls .field-row {
@@ -257,16 +226,8 @@ main {
 
 .global-settings-controls .continue-toggle {
     width: auto;
-}
-
-.global-settings .stats {
+    height: 34px;
     align-self: end;
-    margin-top: 0;
-}
-
-.global-settings .small {
-    grid-column: 1 / -1;
-    margin-bottom: 0;
 }
 
 .algorithm-inputs {
@@ -307,13 +268,6 @@ main {
 
 .field-row input[type=number] {
     width: 100%;
-}
-
-.hint {
-    font-size: 13px;
-    line-height: 1.45;
-    color: #555;
-    margin: 0 0 10px;
 }
 
 .stats {
@@ -488,15 +442,6 @@ main {
     border-color: #9d4d4d;
 }
 
-.water-settings-title {
-    margin: 16px 0 -2px;
-    color: #555;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-}
-
 .actions .sep {
     border-top: 1px solid #ddd;
     margin: 4px 0;
@@ -508,13 +453,6 @@ main {
     text-transform: uppercase;
     letter-spacing: .04em;
     color: #333;
-}
-
-.export-hint {
-    font-size: 11px;
-    line-height: 1.4;
-    color: #666;
-    margin: 0 0 10px;
 }
 
 .export-group {
@@ -547,13 +485,6 @@ main {
     font-size: 11px;
 }
 
-#paintStatus {
-    font-size: 12px;
-    color: #333;
-    margin-top: 8px;
-    font-weight: 600;
-}
-
 #canvasWrap {
     flex: 1;
     min-height: 0;
@@ -562,6 +493,28 @@ main {
     position: relative;
     background-image: radial-gradient(circle, #e6e6e6 1px, transparent 1px);
     background-size: 20px 20px;
+}
+
+.map-title {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 5;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .92);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+    color: #333;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.map-title span {
+    margin-left: 5px;
+    color: #777;
+    font-size: 10px;
+    font-weight: 600;
 }
 
 .sidebar, #canvasWrap {
@@ -684,18 +637,6 @@ svg {
     pointer-events: none;
 }
 
-.small {
-    font-size: 11px;
-    color: #666;
-    margin-top: 8px;
-}
-
-.version {
-    text-align: right;
-    color: #aaa;
-    margin-top: 16px;
-}
-
 @media (max-width: 900px) {
     body {
         height: auto;
@@ -716,11 +657,4 @@ svg {
         min-height: 60vh;
     }
 
-    .global-settings {
-        grid-template-columns: 1fr;
-    }
-
-    .global-settings .stats {
-        margin-top: 12px;
-    }
 }
