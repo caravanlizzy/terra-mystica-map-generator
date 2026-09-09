@@ -156,9 +156,10 @@
             return this.cells.map(row => row.slice());
         }
 
-        // Fill the grid with a terrain algorithm.
-        generate(algorithm, inputs) {
-            algorithm.fill(this, resolveAlgorithmInputs(algorithm, inputs));
+        // Fill the grid with a terrain algorithm. Supports async algorithms
+        // that stream partial results to the UI while they run.
+        async generate(algorithm, inputs) {
+            await algorithm.fill(this, resolveAlgorithmInputs(algorithm, inputs));
             return this;
         }
     }

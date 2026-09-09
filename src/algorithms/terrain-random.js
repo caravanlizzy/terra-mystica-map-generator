@@ -72,7 +72,7 @@
             { key: 'iterations', label: 'Optimisation steps', min: 0, max: 30000, step: 1000, value: 0 },
             { key: 'cont', label: 'Continue', type: 'switch', value: 0 }
         ],
-        fill(grid, inputs) {
+        async fill(grid, inputs) {
 			// ######################### variables we need while running the algorithm and dont want to pass around the whole time
 			let g = grid; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
 			let sizefactor = g.nHexes() / 113.;
@@ -189,6 +189,13 @@
 			for (let k = 0; k < noptsteps; k++) {
 				optimizecolor();
 				//console.log("energy:", curenergy);
+				if ((k + 1) % 100 === 0) {
+					// Publish this batch to the UI's live grid before redrawing it.
+					writeCellsToGrid(grid);
+					TM.app.renderCurrent();
+					// Let the browser paint the redraw before optimizing the next batch.
+					await new Promise(requestAnimationFrame);
+				}
 			}		
 
 
@@ -205,10 +212,13 @@
 			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
 			
 			// translating it back to the grid
-			
-            for (const [x, y] of grid.landCoordinates()) {
-                grid.set(x, y, cells[y][x]);
-            }
+			writeCellsToGrid(grid);
+
+			function writeCellsToGrid(g2) {
+				for (const [x, y] of g2.landCoordinates()) {
+					g2.set(x, y, cells[y][x]);
+				}
+			}
 			
 			// ############# function storage below, totally professional
 

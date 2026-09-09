@@ -490,11 +490,14 @@
         renderCurrent();
     }
 
-    function generateColors() {
+    async function generateColors() {
         readDimensions();
         const grid = state.grid;
         const algorithm = getSelectedAlgorithm();
-        grid.generate(algorithm, inputValues(algorithm, state.algorithmInputs));
+        // Make the working grid current before the algorithm can yield and
+        // request a redraw through TM.app.renderCurrent().
+        state.grid = grid;
+        await grid.generate(algorithm, inputValues(algorithm, state.algorithmInputs));
         renderCurrent();
     }
 
