@@ -340,16 +340,23 @@ main {
     margin-top: 16px;
 }
 
-.water-actions {
+.water-actions,
+.terrain-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+    align-items: center;
     margin-top: 14px;
 }
 
 .water-actions button {
     width: 100%;
 }
+
+.terrain-actions button {
+    width: 100%;
+}
+
 
 .continue-toggle {
     display: flex;
@@ -360,6 +367,10 @@ main {
     color: #333;
     cursor: pointer;
     font-size: 12px;
+}
+
+.algorithm-inputs .continue-toggle {
+    justify-content: space-between;
 }
 
 .continue-toggle input {

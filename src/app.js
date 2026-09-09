@@ -361,16 +361,75 @@
         return decimals ? value.toFixed(decimals.length) : String(value);
     }
 
-    function renderAlgorithmInputs(containerId, algorithm, valuesByAlgorithm) {
+    function renderAlgorithmInputs(containerId, algorithm, valuesByAlgorithm, toggleContainerId) {
         const container = $(containerId);
         container.textContent = '';
+        const toggleContainer = toggleContainerId ? $(toggleContainerId) : null;
+        if (toggleContainer) toggleContainer.textContent = '';
         if (!algorithm) return;
 
         const values = valuesByAlgorithm[algorithm.id] || (valuesByAlgorithm[algorithm.id] = {});
         inputDefinitions(algorithm).forEach((input, index) => {
-            const value = Number.isFinite(values[input.key]) ? values[input.key] : input.value;
+            // The control type is declared in the input config; it defaults to a
+            // slider, with 'switch' (on/off toggle) and 'text' (free text) options.
+            const type = inputControlType(input);
+            const hasStored = type === 'text'
+                ? typeof values[input.key] === 'string'
+                : Number.isFinite(values[input.key]);
+            const value = hasStored ? values[input.key] : input.value;
             values[input.key] = value;
+            const id = containerId + '-' + algorithm.id + '-' + index;
 
+            if (type === 'switch') {
+                // On/off toggle - the same switch used by the water Continue control.
+                const toggle = document.createElement('label');
+                toggle.className = 'continue-toggle';
+
+                const toggleCaption = document.createElement('span');
+                toggleCaption.textContent = input.label;
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.setAttribute('role', 'switch');
+                checkbox.id = id;
+                checkbox.checked = value === 1;
+
+                const knob = document.createElement('span');
+                knob.className = 'toggle-slider';
+                knob.setAttribute('aria-hidden', 'true');
+
+                checkbox.onchange = () => {
+                    values[input.key] = checkbox.checked ? 1 : 0;
+                    saveUiPreferences();
+                };
+
+                toggle.append(toggleCaption, checkbox, knob);
+                (toggleContainer || container).appendChild(toggle);
+                return;
+            }
+
+            if (type === 'text') {
+                // Free-text field.
+                const field = document.createElement('label');
+                field.className = 'algorithm-input';
+                const caption = document.createElement('span');
+                caption.textContent = input.label;
+
+                const text = document.createElement('input');
+                text.type = 'text';
+                text.id = id;
+                text.value = value;
+                text.oninput = () => {
+                    values[input.key] = text.value;
+                    saveUiPreferences();
+                };
+
+                field.append(caption, text);
+                container.appendChild(field);
+                return;
+            }
+
+            // Default: a range slider with a live value readout.
             const field = document.createElement('label');
             field.className = 'algorithm-input';
             const caption = document.createElement('span');
@@ -378,7 +437,7 @@
 
             const slider = document.createElement('input');
             slider.type = 'range';
-            slider.id = containerId + '-' + algorithm.id + '-' + index;
+            slider.id = id;
             slider.min = input.min;
             slider.max = input.max;
             slider.step = input.step || 1;
@@ -397,6 +456,13 @@
             field.append(caption, output, slider);
             container.appendChild(field);
         });
+    }
+
+    // Resolve an input's control type. Explicit `type` wins; otherwise it
+    // defaults to a slider (with a legacy fallback: a 0/1 range is a switch).
+    function inputControlType(input) {
+        if (input.type) return input.type;
+        return 'slider';
     }
 
     function getSelectedAlgorithm() {
@@ -506,7 +572,7 @@
         // Nothing to choose with one algorithm, but keep it visible.
         select.disabled = algorithms.length < 2;
         describeSelectedAlgorithm();
-        renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs);
+        renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs, 'terrainContinueSlot');
     }
 
     function fillWaterAlgorithmDropdown() {
@@ -548,7 +614,7 @@
         if (found) state.algorithmId = id;
         $('algorithm').value = state.algorithmId || '';
         describeSelectedAlgorithm();
-        renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs);
+        renderAlgorithmInputs('algorithmInputs', getSelectedAlgorithm(), state.algorithmInputs, 'terrainContinueSlot');
         // If the map is already colored, re-run so the effect is visible at once.
         if (hasTerrain()) generateColors();
         saveUiPreferences();

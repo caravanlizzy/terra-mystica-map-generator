@@ -13,9 +13,11 @@
     function resolveAlgorithmInputs(algorithm, inputOverrides) {
         const providedInputOverrides = inputOverrides || {};
         return (algorithm.inputs || []).reduce((resolved, input) => {
-            resolved[input.key] = Number.isFinite(providedInputOverrides[input.key])
-                ? providedInputOverrides[input.key]
-                : input.value;
+            const provided = providedInputOverrides[input.key];
+            const hasProvided = input.type === 'text'
+                ? typeof provided === 'string'
+                : Number.isFinite(provided);
+            resolved[input.key] = hasProvided ? provided : input.value;
             return resolved;
         }, {});
     }

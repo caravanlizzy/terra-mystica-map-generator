@@ -70,7 +70,7 @@
         description: 'Every land hex gets a uniformly random terrain color, independent of its neighbors.',
         inputs: [
             { key: 'iterations', label: 'Optimisation steps', min: 0, max: 30000, step: 1000, value: 0 },
-            { key: 'cont', label: 'continue', min: 0, max: 1, step: 1, value: 0 }
+            { key: 'cont', label: 'Continue', type: 'switch', value: 0 }
         ],
         fill(grid, inputs) {
 			// ######################### variables we need while running the algorithm and dont want to pass around the whole time
