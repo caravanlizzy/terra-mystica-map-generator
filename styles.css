@@ -218,12 +218,12 @@ main {
     grid-template-columns: minmax(0, 1fr) minmax(180px, .45fr);
     gap: 0 20px;
     padding: 12px 16px 16px;
-    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
     background: var(--panel);
 }
 
-.global-settings:last-child {
-    padding-bottom: 16px;
+.global-settings:first-child {
+    padding-top: 12px;
 }
 
 .global-settings-primary {
