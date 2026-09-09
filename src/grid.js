@@ -158,8 +158,12 @@
 
         // Fill the grid with a terrain algorithm. Supports async algorithms
         // that stream partial results to the UI while they run.
-        async generate(algorithm, inputs) {
-            await algorithm.fill(this, resolveAlgorithmInputs(algorithm, inputs));
+        async generate(algorithm, inputs, options = {}) {
+            await algorithm.fill(
+                this,
+                resolveAlgorithmInputs(algorithm, inputs),
+                options
+            );
             return this;
         }
     }

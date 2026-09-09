@@ -49,6 +49,7 @@
                 : null,
             algorithmInputs: savedInputGroups(saved.algorithmInputs),
             waterAlgorithmInputs: savedInputGroups(saved.waterAlgorithmInputs),
+            continueTerrain: saved.continueTerrain === true,
             continueWater: saved.continueWater === true,
             liveGenerationUpdates: saved.liveGenerationUpdates !== false
         };

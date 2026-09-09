@@ -3,7 +3,7 @@
  *
  * A water-target algorithm is a plain object:
  *
- *   { id, name, label, target: 'water', description, inputs, run(grid, inputs) }
+ *   { id, name, label, target: 'water', description, inputs, run(grid, inputs, options) }
  *
  * `run` receives and updates a MapGrid, then returns it. It is picked up automatically by the water select in the
  * UI because it registers itself in the shared TM.algorithms registry.
@@ -22,7 +22,7 @@
         return Math.floor(Math.random() * max);
     }
 
-    function WaterNiklassa(inputs) {
+    function WaterNiklassa(inputs, options = {}) {
         // ######################### variables we need while running the algorithm and dont want to pass around the whole time
         let cells = [];		// terrain information as 2d array
         let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
@@ -68,7 +68,7 @@
                 clusterscan.push([]);
                 for (let i = 0; i < grid.rowWidth(j); i++) {
                     let col = (rndint(113) < 2 * optcounts[0] ? 0 : 1); // + rndint(7)
-                    if (inputs.cont == 1) {
+                    if (options.continueFromCurrentLayout) {
                         col = parseInt(g.get(i, j));
                     }
                     cells[j].push(col);
@@ -395,8 +395,8 @@
             {key: 'nLandClusterMax', label: 'Max #land cluster', min: 1, max: 16, step: 1, value: 8},
             {key: 'iterations', label: 'Optimisation steps', min: 0, max: 20000, step: 100, value: 10000}
         ],
-        run: function (grid, inputs) {
-            return new WaterNiklassa(inputs).run(grid);
+        run: function (grid, inputs, options) {
+            return new WaterNiklassa(inputs, options).run(grid);
         }
     });
 })(window.TM = window.TM || {});

@@ -114,7 +114,11 @@
             <div id="algorithmInputs" class="algorithm-inputs" aria-live="polite"></div>
             <div class="actions-grid">
                 <button class="primary" id="generateColors">Generate</button>
-                <div id="terrainContinueSlot" class="continue-slot"></div>
+                <label class="continue-toggle" title="Refine the current terrain when generating.">
+                    <span>Continue</span>
+                    <input id="continueTerrain" type="checkbox" role="switch">
+                    <span class="toggle-slider" aria-hidden="true"></span>
+                </label>
                 <button id="resetTerrain" class="reset-action" title="Clear terrain and keep water.">Reset terrain</button>
             </div>
             <div id="paintStatus"></div>
