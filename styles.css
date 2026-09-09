@@ -340,8 +340,7 @@ main {
     margin-top: 16px;
 }
 
-.water-actions,
-.terrain-actions {
+.actions-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
@@ -349,11 +348,7 @@ main {
     margin-top: 14px;
 }
 
-.water-actions button {
-    width: 100%;
-}
-
-.terrain-actions button {
+.actions-grid button {
     width: 100%;
 }
 
@@ -423,14 +418,14 @@ main {
     cursor: not-allowed;
 }
 
-.water-actions .reset-action {
+.actions-grid .reset-action {
     grid-column: 1 / -1;
     margin-top: 2px;
     color: #8a2525;
     border-color: #b77d7d;
 }
 
-.water-actions .reset-action:hover:not(:disabled) {
+.actions-grid .reset-action:hover:not(:disabled) {
     background: #fff3f3;
     border-color: #9d4d4d;
 }

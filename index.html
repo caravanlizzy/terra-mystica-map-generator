@@ -59,7 +59,7 @@
             <label title="Which algorithm generates the random water layout.">Water algorithm
                 <select id="waterAlgorithm"></select>
             </label>
-            <div class="water-actions" aria-label="Water layout actions">
+            <div class="actions-grid" aria-label="Water layout actions">
                 <button class="primary" id="randomWater">Generate</button>
                 <label class="continue-toggle" title="When enabled, Generate refines the current water layout instead of starting a new one.">
                     <span>Continue</span>
@@ -106,9 +106,10 @@
                 <select id="algorithm"></select>
             </label>
             <div id="algorithmInputs" class="algorithm-inputs" aria-live="polite"></div>
-            <div class="actions terrain-actions">
+            <div class="actions-grid">
                 <button class="primary" id="generateColors">Generate</button>
-                <div id="terrainContinueSlot" class="terrain-continue-slot"></div>
+                <div id="terrainContinueSlot" class="continue-slot"></div>
+                <button id="resetTerrain" class="reset-action" title="Clear every terrain color, turning all land hexes back to unassigned, keeping the water layout.">Reset terrain</button>
             </div>
             <div id="paintStatus"></div>
         </section>

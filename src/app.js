@@ -309,6 +309,15 @@
         renderCurrent();
     }
 
+    // Clear every terrain color: all land hexes go back to unassigned (-1),
+    // while the water layout is kept intact.
+    function resetTerrain() {
+        for (const [x, y] of state.grid.landCoordinates()) {
+            state.grid.set(x, y, UNASSIGNED);
+        }
+        renderCurrent();
+    }
+
     function applyLayout(layout) {
         state.grid = new TM.MapGrid(layout);
         $('width').value = state.grid.width;
@@ -630,6 +639,7 @@
         $('newMap').onclick = newEmptyMap;
         $('restoreDefaults').onclick = restoreDefaults;
         $('generateColors').onclick = generateColors;
+        $('resetTerrain').onclick = resetTerrain;
         $('toggleColors').onclick = toggleColorsFromIcon;
 
         $('preset').onchange = (event) => {
