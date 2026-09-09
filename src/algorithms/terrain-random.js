@@ -87,6 +87,7 @@
 
 			let adjship1x = []; // for any given cell a list of all the other cells that are within ship1 reach
 			let adjship1y = [];
+			let adjship1cols = []; // list per cell of number of each adjacent color with ship1
 			let shipscan = [];	// used to store progress in ship1 search
 
 			let centersx = [0,0,0,0,0,0,0,0]; // stores the center of mass of every color
@@ -102,7 +103,8 @@
 			let countfails = 0; // total number of each color deviations
 			let adjfails = 0; // no two colors adjacent
 			
-			let neighfails = 0; // counts the number of fields that have the same color three times as neighbor
+			let neighfails = 0; // counts the number of hex that have the same color three times as neighbor
+			let neighship1fails = 0; // counts the number of hex that have the same color three times as neighbor with ship1
 			let neighdivs = []; 	// 2d array... counts the occurrence for every hex degree of different adjcolors 
 			
 			
@@ -197,6 +199,7 @@
 			console.log("######### land algo report ##########");
 			console.log("cur energy/color energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
 			console.log("color counts, #adj pairs, #neigh fails", colcounts, adjfails, neighfails);
+			console.log("#ship1 neighfails", neighship1fails);
 			// console.log("land degrees", landdegrees, landdegrees.reduce((a, b) => a + b, 0)); // the water algorithm produces this
 			console.log("neigh diversities\n", toTable(neighdivs));
 			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
@@ -264,7 +267,6 @@
 					sum += 2. * Math.max(ncolorborder[i] - bordercolmax, bordercolmin - ncolorborder[i],0);
 				}
 				
-				
 				// neighbourhood hard diversity fails:
 				sum += 3.* neighdivs[3][2];
 				sum += 3. * neighdivs[4][2];
@@ -277,6 +279,7 @@
 				sum += 2. * Math.max(neighdivs[6][6] - Math.round(0.11*landdegrees[6]), 0);
 
 				sum	+= 4. * neighfails; // penalizes hexes that have one color three times as neighbor
+				sum	+= 2. * ship1fails; // penalizes hexes that have 2+ samecolor ship1 neighbors, and hexes that have 3+ neighbors of one adjacent color
 			
 				
 				sum += centersfail; // penalize uneven distribution of colors spatially
@@ -298,25 +301,37 @@
 					centersx[k] = 0;
 					centersy[k] = 0;
 				}
-				// total number of colors
-				colcounts = [0,0,0,0,0,0,0,0];
-				// colors on the border;
-				ncolorborder = [0,0,0,0,0,0,0,0];
-				// adjcolors per cell
-				adjcols = [];
+				colcounts = [0,0,0,0,0,0,0,0]; 	// total number of colors
+				ncolorborder = [0,0,0,0,0,0,0,0]; // colors on the border;
+				adjcols = [];					// adjcolors per cells
+				adjship1cols = [];					// adjcolors per cells
+
 				for (let y = 0; y < g.height; y++) {
 					adjcols[y] = [];
+					adjship1cols[y] = [];
 					for (let x = 0; x < g.rowWidth(y); x++) {
 						let c = cells[y][x];
-						// //counts
+						
+						// general color count
 						colcounts[c]++;
+						if (adjsx[y][x].length < 6) ncolorborder[c]++;
+						
 						// color adjacencies
 						let ncol = [0,0,0,0,0,0,0,0];
 						for (let i = 0; i < adjsx[y][x].length; i++) {
 							ncol[cells[adjsy[y][x][i] ][adjsx[y][x][i] ]]++;
 						}
 						adjcols[y][x] = ncol.slice();
-						if (adjsx[y][x].length < 6) ncolorborder[c]++;
+
+						// color ship1 adjacencies
+						if (c != 0) {
+							ncol = [0,0,0,0,0,0,0,0];
+							for (let i = 0; i < adjship1x[y][x].length; i++) {
+								ncol[cells[adjship1y[y][x][i] ][adjship1x[y][x][i] ]]++;
+							}
+							adjship1cols[y][x] = ncol.slice();
+						}
+						
 						// centers
 						centersx[c] += x;
 						centersy[c] += y;			
@@ -329,18 +344,43 @@
 			}
 
 			function calcship1fails() {
-				ship1fails = 0;
+				// ship1fails = 0;
+				neighship1fails = 0;
+				
 				for (let i = 0; i < landcellsx.length; i++) {
 					let x = landcellsx[i], y = landcellsy[i];
 					let c = cells[y][x];
-					let sum = 0;
-					let sadjx = adjship1x[y][x], sadjy = adjship1y[y][x];
-					for (let j = 0; j < sadjx.length; j++) {
-						if (cells[sadjy[j]][sadjx[j]] != c) continue;
-						sum += 1;
+					
+					// // ship1 direct fails
+					// let sum = 0;
+					// let sadjx = adjship1x[y][x], sadjy = adjship1y[y][x];
+					// for (let j = 0; j < sadjx.length; j++) {
+						// if (cells[sadjy[j]][sadjx[j]] != c) continue;
+						// sum += 1;
+					// }
+					// if (sum > 1) ship1fails += (sum - 1);
+					
+					// 3 neighbors of adjacent color via ship1
+					let ncol = adjcols[y][x];
+					let ncols1 = adjship1cols[y][x];
+					let c1 = (c == 1 ? 7 : c - 1);
+					let c2 = (c == 7 ? 1 : c + 1);
+					if (ncols1[c] >= 2) {
+						neighship1fails++;
+						console.log("double own color ship1 fail!!",x,y,c);
 					}
-					if (sum > 1) ship1fails += (sum - 1);
+					if (ncols1[c1] >= 3) {
+						neighship1fails++;  //ncol[c1] + 
+						console.log("triple adj color ship1 fail!!",x,y,c,c1);
+					}
+					if (ncols1[c2] >= 3) {
+						neighship1fails++; 	// ncol[c2] 		
+						console.log("triple adj  color ship1 fail!!",x,y,c,c2);
+					}						
 				}
+
+
+
 			}
 
 			// function calccolorborderfail() { // hier muss man noch was automatisieren die 40 macht mich skeptisch
