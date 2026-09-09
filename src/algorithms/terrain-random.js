@@ -376,19 +376,17 @@
 					let c2 = (c == 7 ? 1 : c + 1);
 					if (ncols1[c] >= 2) {
 						neighship1fails++;
-						console.log("double own color ship1 fail!!",x,y,c);
+						// console.log("double own color ship1 fail!!",x,y,c);
 					}
 					if (ncols1[c1] >= 3) {
 						neighship1fails++;  //ncol[c1] + 
-						console.log("triple adj color ship1 fail!!",x,y,c,c1);
+						// console.log("triple adj color ship1 fail!!",x,y,c,c1);
 					}
 					if (ncols1[c2] >= 3) {
 						neighship1fails++; 	// ncol[c2] 		
-						console.log("triple adj  color ship1 fail!!",x,y,c,c2);
+						// console.log("triple adj  color ship1 fail!!",x,y,c,c2);
 					}						
 				}
-
-
 
 			}
 
