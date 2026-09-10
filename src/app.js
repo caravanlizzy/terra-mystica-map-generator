@@ -365,11 +365,9 @@
         return decimals ? value.toFixed(decimals.length) : String(value);
     }
 
-    function renderAlgorithmInputs(containerId, algorithm, valuesByAlgorithm, toggleContainerId) {
+    function renderAlgorithmInputs(containerId, algorithm, valuesByAlgorithm) {
         const container = $(containerId);
         container.textContent = '';
-        const toggleContainer = toggleContainerId ? $(toggleContainerId) : null;
-        if (toggleContainer) toggleContainer.textContent = '';
         if (!algorithm) return;
 
         const values = valuesByAlgorithm[algorithm.id] || (valuesByAlgorithm[algorithm.id] = {});
@@ -408,7 +406,7 @@
                 };
 
                 toggle.append(toggleCaption, checkbox, knob);
-                (toggleContainer || container).appendChild(toggle);
+                container.appendChild(toggle);
                 return;
             }
 
