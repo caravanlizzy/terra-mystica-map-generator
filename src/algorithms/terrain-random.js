@@ -120,6 +120,7 @@
 			let clusteropfail = 0;
 			let clustergoodfail = 0;
 			let clusterdecentfail = 0;
+			let colorclusters = []; // for each color the number of clusters of certain size
 
 			let extclusters = [];		// similar to colorclusters but including ship1
 			let extclusterfail = 0;
@@ -135,13 +136,14 @@
 
 			cells = []; adjsx = []; adjsy = []; adjcols = [];
 			// generate the field
+			let landcount = 0;
 			for (let j = 0; j < grid.height; j++) {
 				cells.push([]);
 				clusterscan.push([]);
 				for (let i = 0; i < grid.rowWidth(j); i++) {
 					let col = 0;
 					if (!options.continueFromCurrentLayout) {
-						if (g.get(i,j) !== 0) col = 1 + rndint(7);
+						if (g.get(i,j) !== 0) col =  1 + Math.floor(landcount++/optavg); // 1 + rndint(7);
 					} else {
 						col = g.get(i,j);
 					}
@@ -213,6 +215,9 @@
 			console.log("neigh diversities\n", toTable(neighdivs));
 			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
 			console.log("center dists:", centerdist);
+			console.log("color clusters:", colorclusters, toTable(colorclusters));
+			extclusters[0] = [];
+			console.log("ext col clusters:", extclusters, toTable(extclusters));
 			
 			// translating it back to the grid
 			writeCellsToGrid(grid);
@@ -306,7 +311,7 @@
 			}
 			
 			function optimizecolor() {
-				updaterandomcolor();
+				// updaterandomcolor();
 				swaprandomcolor();					
 			}
 			
@@ -417,11 +422,21 @@
 				// }
 			// }
 			
+			
+			/*	center distributions:
+				original: 		[ 0, 0.67, 0.59, 0.10, 0.91, 0.58, 0.24, 0.12 ]
+				fireice: 		[ 0, 0.46, 1.56, 0.78, 0.46, 0.25, 0.94, 0.57 ]
+				fjords: 		[ 0, 0.11, 0.48, 0.97, 0.62, 0.49, 0.94, 0.23 ]
+				loonlakes: 		[ 0, 0.57, 0.18, 0.09, 0.29, 0.53, 0.65, 0.09 ]
+				archipel:		[ 0, 0.58, 0.84, 0.82, 1.44, 0.55, 1.12, 0.73 ]
+				algo:			[ 0, 0.18, 0.35, 0.52, 0.35, 0.61, 0.49, 0.33 ]
+			
+			*/
 			function calccentersfail() { 
 				let sum = 0;
 				let templog = [];
 				for (let k = 1; k < 8; k++) {
-					centerdist[k] = Math.sqrt((centersx[k] - optcenter[0]) ** 2 + (centersy[k] - optcenter[1]) ** 2);
+					centerdist[k] = 0.01*Math.round(100*  Math.sqrt((centersx[k] - optcenter[0]) ** 2 + (centersy[k] - optcenter[1]) ** 2));
 					sum += centerdist[k];
 					sum += Math.abs; //think its good to square as it also should be balanced
 				}
@@ -471,11 +486,16 @@
 			
 
 			function calccolorclusters() {
+				colorclusters = [];
+				
 				clusteropfail = 0;
 				clustergoodfail = 0;
 				clusterdecentfail = 0;
 				let clustergoodaverage = 0, clusterdecentaverage = 0;
+				colorclusters[0] = [];
 				for (let c0 = 1; c0 < 8; c0++) {
+					colorclusters[c0] = [];
+					
 					opclusters[c0] = 0;
 					goodclusters[c0] = 0;
 					decentclusters[c0] = 0;
@@ -501,6 +521,12 @@
 					let y = landcellsy[k], x = landcellsx[k];
 					if (clusterscan[y][x] == 1) continue;
 					let s = reccolorcluster(x,y,c0,c1,c2,0);
+					
+					if (s > 0) {						
+						if (!colorclusters[c0][s]) colorclusters[c0][s] = 1;
+						else colorclusters[c0][s]++;
+					}
+					
 					if (s > 5) opclusters[c0]++;
 					else if (s > 4) goodclusters[c0]++;
 					if (s > 3) decentclusters[c0]++;		
@@ -548,6 +574,7 @@
 					let y = landcellsy[k], x = landcellsx[k];
 					if (clusterscan[y][x] == 1) continue;
 					let s = recextcluster(x,y,c0,c1,c2,0);
+					if (s == 0) continue;
 					if (!extclusters[c0][s]) extclusters[c0][s] = 1;
 					else extclusters[c0][s]++;
 					// if (s > 5) opclusters[c0]++;
@@ -565,8 +592,10 @@
 				else if (c == c1) s += 1;
 				else if (c == c2) s += 1;
 				else return s; // not of the right color
-				for (let i = 0; i < adjship1x[y][x].length; i++) {
-					s = recextcluster(adjship1x[y][x][i],adjship1y[y][x][i],c0,c1,c2,s);
+				// for (let i = 0; i < adjship1x[y][x].length; i++) {
+					// s = recextcluster(adjship1x[y][x][i],adjship1y[y][x][i],c0,c1,c2,s);
+				for (let i = 0; i < adjextx[y][x].length; i++) {
+					s = recextcluster(adjextx[y][x][i],adjexty[y][x][i],c0,c1,c2,s);
 				}
 				return s;
 			}
