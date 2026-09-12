@@ -95,6 +95,7 @@
 			let centersx = [0,0,0,0,0,0,0,0]; // stores the center of mass of every color
 			let centersy = [0,0,0,0,0,0,0,0];
 			let optcenter = g.centerOfMass(); // [x,y] array storing optimal center of mass
+			let centerdist = [0,0,0,0,0,0,0,0]; // stores the distance of each colors center of mass to the center of the map
 			let centersfail = 0;
 
 			let ncolorborder = [0,0,0,0,0,0,0,0]; // how many of that color are at the border
@@ -211,6 +212,7 @@
 			// console.log("land degrees", landdegrees, landdegrees.reduce((a, b) => a + b, 0)); // the water algorithm produces this
 			console.log("neigh diversities\n", toTable(neighdivs));
 			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
+			console.log("center dists:", centerdist);
 			
 			// translating it back to the grid
 			writeCellsToGrid(grid);
@@ -273,7 +275,6 @@
 				
 				sum += 3. * adjfails; // penalizes same colors being adjacent
 
-				//sum += 2 * colorborderfail;  // penalizes uneven distribution of border hex among the colors
 				for (let i = 1; i < 8; i++) {
 					sum += 2. * Math.max(ncolorborder[i] - bordercolmax, bordercolmin - ncolorborder[i],0);
 				}
@@ -290,10 +291,13 @@
 				sum += 2. * Math.max(neighdivs[6][6] - Math.round(0.11*landdegrees[6]), 0);
 
 				sum	+= 4. * neighfails; // penalizes hexes that have one color three times as neighbor
-				sum	+= 2. * ship1fails; // penalizes hexes that have 2+ samecolor ship1 neighbors, and hexes that have 3+ neighbors of one adjacent color
+				sum	+= 2. * neighextfails; // penalizes hexes that have 2+ samecolor ext neighbors, and hexes that have 3+ ext neighbors of one adjacent color
 			
+				//sum += centersfail; // penalize centers of mass being off
+				for (let i = 1; i < 8; i++) {
+					sum += 2.*Math.max((Math.round(4. * centerdist[i]) - 1.5)*0.25, 0);
+				}				
 				
-				sum += centersfail; // penalize uneven distribution of colors spatially
 				sum += 3 * clusteropfail + clustergoodfail + 0.015 * clusterdecentfail;	// penalizes large clusters of color+(colors that are adjacent in color-circle)
 //				sum += 2 * ship1fails; // this penalizes ship1 same color neighbors  (honestly this doesnt look super good since it doesnt seem to penalize if the distribution among the colors is bad, it just reduces total ship1 adjacencies)
 				sum += 1.5 * extclusterfail; // penalizes clusters but clusters with ship1
@@ -415,9 +419,11 @@
 			
 			function calccentersfail() { 
 				let sum = 0;
+				let templog = [];
 				for (let k = 1; k < 8; k++) {
-					sum += Math.abs(centersx[k] - optcenter[0]) ** 2;
-					sum += Math.abs(centersy[k] - optcenter[1]) ** 2; //think its good to square as it also should be balanced
+					centerdist[k] = Math.sqrt((centersx[k] - optcenter[0]) ** 2 + (centersy[k] - optcenter[1]) ** 2);
+					sum += centerdist[k];
+					sum += Math.abs; //think its good to square as it also should be balanced
 				}
 				centersfail = sum;
 			}
