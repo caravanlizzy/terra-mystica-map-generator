@@ -329,14 +329,14 @@
 					sum += 2. * Math.max(twotwoplus - 2, 1 - twotwoplus, 0);
 				}		
 				// specific extended cluster optimizatino for merqueens
-				for (let i = 2; i <= 2; i++) {
-					let twotwoplus = 0;
-					for (let j = 0; j < colorclusters[i].length; j++) {
-						let cc = colorclusters[i][j];
-						if (cc[0] >= 2 && cc[1] >= 2) twotwoplus++; 
-					}
-					sum += 2. * Math.max(twotwoplus - 4, 3 - twotwoplus, 0);
-				}		
+				// for (let i = 2; i <= 2; i++) {
+					// let twotwoplus = 0;
+					// for (let j = 0; j < colorclusters[i].length; j++) {
+						// let cc = colorclusters[i][j];
+						// if (cc[0] >= 2 && cc[1] >= 2) twotwoplus++; 
+					// }
+					// sum += 2. * Math.max(twotwoplus - 4, 3 - twotwoplus, 0);
+				// }		
 
 							
 				
