@@ -105,7 +105,8 @@
 
 			let countfails = 0; // total number of each color deviations
 			let adjfails = 0; // no two colors adjacent
-			
+			let triplefails = 0; // number of patterns XAX with A = X+/-1
+			let marcfails = 0; // number of patterns XAX with A = X+/-3
 			let neighfails = 0; // counts the number of hex that have the same color three times as neighbor
 			let neighextfails = 0; // counts the number of hex that have the same color three times as neighbor with ship1
 			let neighdivs = []; 	// 2d array... counts the occurrence for every hex degree of different adjcolors 
@@ -207,17 +208,32 @@
 				const w = arr[0].map((_, i) => Math.max(...arr.map(r => String(r[i]).length)));
 				return arr.map(r => r.map((v, i) => String(v).padEnd(w[i])).join(" | ")).join("\n");
 			};
+			
+			// function toTable (a) {
+				// let s = "";
+				// for (let i = 0; i < a.length; i++) {
+					// if (a[i] === undefined) continue;
+					// s += i + ":";
+					// for (let j = 0; j < a[i].length; j++) {
+						// let b = (a[i][j] === undefined ? " 0" : ( a[i][j] < 10 ? " " + a[i][j] : a[i][j] ));
+						// s += " " + b + " |";
+					// }
+					// s += "\n";
+				// }
+				// return s;
+			// };
+			
 			console.log("######### land algo report ##########");
 			console.log("cur energy/color energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
-			console.log("color counts, #adj pairs, #neigh fails", colcounts, adjfails, neighfails);
-			console.log("#ext neighfails", neighextfails);
-			// console.log("land degrees", landdegrees, landdegrees.reduce((a, b) => a + b, 0)); // the water algorithm produces this
-			console.log("neigh diversities\n", toTable(neighdivs));
+			console.log("color counts, #adj, #neigh, #ext neigh, #X|X+1|X, #X|X+3|X", colcounts, adjfails, neighfails, neighextfails, triplefails, marcfails);
+			//console.log("neigh diversities\n", toTable(neighdivs));
 			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
 			console.log("center dists:", centerdist);
-			console.log("color clusters:", colorclusters, toTable(colorclusters));
+			for (let i = 0; i < colorclusters.length; i++) colorclusters[i].sort();
+			//colorclusters = colorclusters.sort((a, b) => 100*(a[0].value - b[0].value) + a[1].value - b[1].value);
+			console.log("color clusters:", colorclusters, toTable(colorclusters)); // 
 			extclusters[0] = [];
-			console.log("ext col clusters:", extclusters, toTable(extclusters));
+			//console.log("ext col clusters:", extclusters, toTable(extclusters));
 			
 			// translating it back to the grid
 			writeCellsToGrid(grid);
@@ -269,7 +285,7 @@
 				calccolorclusters();
 				calcship1fails();
 				// calccolorborderfail();
-				calcextclusters();
+				// calcextclusters();
 
 				let sum = 0;
 				
@@ -279,6 +295,7 @@
 				}			
 				
 				sum += 3. * adjfails; // penalizes same colors being adjacent
+				sum += 1. * triplefails; // penalizes X-(Xpm1)-X
 
 				for (let i = 1; i < 8; i++) {
 					sum += 2. * Math.max(ncolorborder[i] - bordercolmax, bordercolmin - ncolorborder[i],0);
@@ -303,16 +320,31 @@
 					sum += 2.*Math.max((Math.round(4. * centerdist[i]) - 1.5)*0.25, 0);
 				}				
 				
-				sum += 3 * clusteropfail + clustergoodfail + 0.015 * clusterdecentfail;	// penalizes large clusters of color+(colors that are adjacent in color-circle)
-//				sum += 2 * ship1fails; // this penalizes ship1 same color neighbors  (honestly this doesnt look super good since it doesnt seem to penalize if the distribution among the colors is bad, it just reduces total ship1 adjacencies)
-				sum += 1.5 * extclusterfail; // penalizes clusters but clusters with ship1
 				
-				return sum;// + rnd()*2;
+				// cluster optimization... at least one 2,2+ cluster for each color would be nice.
+				for (let i = 1; i < 8; i++) {
+					let twotwoplus = 0;
+					for (let j = 0; j < colorclusters[i].length; j++) {
+						let cc = colorclusters[i][j];
+						if (cc[0] >= 2 && cc[1] >= 2) twotwoplus++; 
+					}
+					sum += 2. * Math.max(twotwoplus - 2, 1 - twotwoplus, 0);
+				}				
+				
+				
+				
+				
+				// sum += 3 * clusteropfail + clustergoodfail + 0.015 * clusterdecentfail;	// penalizes large clusters of color+(colors that are adjacent in color-circle)
+//				sum += 2 * ship1fails; // this penalizes ship1 same color neighbors  (honestly this doesnt look super good since it doesnt seem to penalize if the distribution among the colors is bad, it just reduces total ship1 adjacencies)
+				// sum += 1.5 * extclusterfail; // penalizes clusters but clusters with ship1
+				
+				return sum;
 			}
 			
 			function optimizecolor() {
 				// updaterandomcolor();
-				swaprandomcolor();					
+				swaprandomcolor();	
+				triplerandomcolor();
 			}
 			
 			function precalc() { // do somewhat unified pre calculations for energy:
@@ -446,6 +478,8 @@
 			function calcadjfails() {
 				adjfails = 0;
 				neighfails = 0;
+				triplefails = 0;
+				marcfails = 0;
 
 				// prepare neighdivs
 				for (let i = 1; i <= 6; i++) {
@@ -469,6 +503,10 @@
 				let ncol = adjcols[y][x];
 				
 				if (ncol[c] > 0) adjfails += ncol[c];  // add how many neighbors with the same color
+				if (ncol[c == 1 ? 7 : c - 1] > 1) triplefails += 1;
+				if (ncol[c == 7 ? 1 : c + 1] > 1) triplefails += 1;
+				if (ncol[(c + 3 - 1) % 7 + 1] > 1 ) marcfails += 1;
+				if (ncol[(c - 3 + 6) % 7 + 1] > 1) marcfails += 1;
 				
 				let ndif = 0; // how many different colors appear
 				let nn = 0; // number of neighbours
@@ -511,7 +549,8 @@
 					clusterdecentfail += Math.abs(clusterdecentaverage/7. - decentclusters[c0])**2;
 				}
 			}
-			function findcolorclusters(c0,c1,c2) { //c0 is the main color and c1, c2 are its neighbours
+			function findcolorclusters(c0,c1,c2) { //c0 is the main color and c1, c2 are its neighbours.
+				colorclusters[c0] = [];
 				for (let j = 0; j < grid.height; j++) {
 					for (let i = 0; i < grid.rowWidth(j); i++) {
 						clusterscan[j][i] = 0;
@@ -519,34 +558,72 @@
 				}
 				for (let k = 0; k < landcellsx.length; k++) {
 					let y = landcellsy[k], x = landcellsx[k];
-					if (clusterscan[y][x] == 1) continue;
-					let s = reccolorcluster(x,y,c0,c1,c2,0);
+					if (clusterscan[y][x] == 1) continue;	//already in a previous cluster
+					if (cells[y][x] != c0) continue; // no need to start recursion, we only care about clusters if they contain c0 hexes
 					
-					if (s > 0) {						
-						if (!colorclusters[c0][s]) colorclusters[c0][s] = 1;
-						else colorclusters[c0][s]++;
-					}
+					let s = reccolorcluster(x,y,c0,c1,c2,[0,0]);
 					
-					if (s > 5) opclusters[c0]++;
-					else if (s > 4) goodclusters[c0]++;
-					if (s > 3) decentclusters[c0]++;		
+					colorclusters[c0].push(s);
+
+					
+					// if (s > 5) opclusters[c0]++;
+					// else if (s > 4) goodclusters[c0]++;
+					// if (s > 3) decentclusters[c0]++;		
 				}
 			}
-			function reccolorcluster(x,y,c0,c1,c2,score) {
+			function reccolorcluster(x,y,c0,c1,c2,score) { // we return arrays with [n0,na] which is #n0 of c0 in cluster and na = # of adjacent colors
 				if (g.outOfBounds(x,y)) return score; // this cell aint existin
 				if (clusterscan[y][x] == 1) return score; // already scanned
 				clusterscan[y][x] = 1; // scanned this
-				let s = score;
+				let s = score.slice();
 				let c = cells[y][x];
-				if (c == c0) s += 2;
-				else if (c == c1) s += 1;
-				else if (c == c2) s += 1;
+				if (c == c0) s[0] += 1;
+				else if (c == c1) s[1] += 1;
+				else if (c == c2) s[1] += 1;
 				else return s; // not of the right color
 				for (let i = 0; i < adjsx[y][x].length; i++) {
 					s = reccolorcluster(adjsx[y][x][i],adjsy[y][x][i],c0,c1,c2,s);
 				}
 				return s;
-			}			
+			}		
+
+			// function findcolorclusters(c0,c1,c2) { //c0 is the main color and c1, c2 are its neighbours
+				// for (let j = 0; j < grid.height; j++) {
+					// for (let i = 0; i < grid.rowWidth(j); i++) {
+						// clusterscan[j][i] = 0;
+					// }
+				// }
+				// for (let k = 0; k < landcellsx.length; k++) {
+					// let y = landcellsy[k], x = landcellsx[k];
+					// if (clusterscan[y][x] == 1) continue;
+					// let s = reccolorcluster(x,y,c0,c1,c2,0);
+					
+					// if (s > 0) {						
+						// if (!colorclusters[c0][s]) colorclusters[c0][s] = 1;
+						// else colorclusters[c0][s]++;
+					// }
+					
+					// if (s > 5) opclusters[c0]++;
+					// else if (s > 4) goodclusters[c0]++;
+					// if (s > 3) decentclusters[c0]++;		
+				// }
+			// }
+			// function reccolorcluster(x,y,c0,c1,c2,score) {
+				// if (g.outOfBounds(x,y)) return score; // this cell aint existin
+				// if (clusterscan[y][x] == 1) return score; // already scanned
+				// clusterscan[y][x] = 1; // scanned this
+				// let s = score;
+				// let c = cells[y][x];
+				// if (c == c0) s += 2;
+				// else if (c == c1) s += 1;
+				// else if (c == c2) s += 1;
+				// else return s; // not of the right color
+				// for (let i = 0; i < adjsx[y][x].length; i++) {
+					// s = reccolorcluster(adjsx[y][x][i],adjsy[y][x][i],c0,c1,c2,s);
+				// }
+				// return s;
+			// }			
+			
 
 			// extended clusters are like colorclusters but incoorporate ship1
 			function calcextclusters() {
@@ -644,6 +721,48 @@
 				} else {
 					curenergy = newenergy; // keep the new energy
 					// changecount++;
+				}	
+			}
+
+			function triplerandomcolor() {
+				let ix1 = rndint(landcellsx.length);
+				let ix2 = rndint(landcellsx.length - 1);
+				if (ix2 >= ix1) ix2++; // pick a different index
+				
+				let ix = [];
+				ix[0] = rndint(landcellsx.length);
+				ix[1] = rndint(landcellsx.length - 1);
+				if (ix[1] >= ix[0]) ix[1] += 1; // pick a different index
+				ix[2] = rndint(landcellsx.length - 2);
+				if (ix[2] >= ix[0]) ix[2] += 1; // pick a different index
+				if (ix[2] >= ix[1]) ix[2] += 1; // pick a different index
+				
+				let xi = [], yi = [], ci = [];
+				for (let i = 0; i <= 2; i++) {
+					xi[i] = landcellsx[ix[i]];
+					yi[i] = landcellsy[ix[i]];
+					ci[i] = cells[yi[i]][xi[i]];
+				}
+				
+				if ( (ci[0] == ci[1]) && (ci[1] == ci[2])) return;
+				
+				let perms = [[0,1,2], [1,0,2], [0,2,1], [2,1,0], [1,2,0], [2,0,1] ];
+				
+				let bestenergy = curenergy;
+				let bestperm = 0;
+				for (let k = 1; k < perms.length; k++) {
+					for (let i = 0; i <= 2; i++) {
+						cells[yi[i]][xi[i]] = ci[perms[k][i]];
+					}
+					let newenergy = colorenergy();
+					if (newenergy >= bestenergy) continue;
+					bestenergy = newenergy;
+					bestperm = k;
+				}
+				
+				curenergy = bestenergy;
+				for (let i = 0; i <= 2; i++) {
+					cells[yi[i]][xi[i]] = ci[perms[bestperm][i]];
 				}	
 			}
 			
