@@ -263,8 +263,6 @@
 			extclusters[0] = [];
 			for (let i = 1; i < extclusters.length; i++) extclusters[i].sort();
 			console.log("ext clusters:", extclusters, toTable(extclusters)); //  
-			console.log("adjextx", adjextx);
-			console.log("adjexty", adjexty);
 			
 			// translating it back to the grid
 			writeCellsToGrid(grid);
@@ -784,9 +782,10 @@
 						adjship1x[y][x] = scannedx.slice(1); adjship1y[y][x] = scannedy.slice(1); // save everything but yourself
 						adjextx[y][x] = scannedx.slice(1); adjexty[y][x] = scannedy.slice(1);
 						for (let i = 0; i < adjsx[y][x].length; i++) {
-							if (shipscan[y][x] == 1) continue; // is already included anyway
-							adjextx[y][x].push(adjsx[y][x][i]); // otherwise add the neighbor
-							adjexty[y][x].push(adjsy[y][x][i]);
+							let ax = adjsx[y][x][i], ay = adjsy[y][x][i];
+							if (shipscan[ay][ax] == 1) continue; // is already included anyway
+							adjextx[y][x].push(ax); // otherwise add the neighbor
+							adjexty[y][x].push(ay);
 						}
 						
 						
