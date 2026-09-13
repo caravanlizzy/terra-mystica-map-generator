@@ -112,7 +112,7 @@
                 if (info.label) {
                     const t = document.createElementNS(NS, 'text');
                     t.setAttribute('x', cx);
-                    t.setAttribute('y', cy);
+                    t.setAttribute('y', (cy - 20).toFixed(1));
                     t.setAttribute('class', 'label');
                     t.setAttribute('fill', info.labelColor || '#222');
                     t.textContent = info.label;
