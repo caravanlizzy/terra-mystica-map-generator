@@ -44,11 +44,40 @@
 	fjords:			[ 0, 5, 16, 29, 47, 4, 12 ]
 	loon lakes:		[ 0, 3, 16, 39, 30, 24, 0 ]
 	archipelago:	[ 0, 5, 25, 27, 39, 7, 10 ]
-	niklasrndm:		[ 0, 5, 15, 40, 37, 12, 4 ]
-					[ 0, 6, 9, 44, 45, 5, 4 ]
-					[ 0, 6, 17, 29, 47, 10, 4 ]
-					[ 0, 6, 12, 36, 48, 8, 3 ]
-					[ 0, 5, 15, 33, 50, 6, 4 ]
+
+
+	// neigh diversity 
+	// 0 | 3	// original
+	// 0 | 0 | 18
+	// 0 | 0 | 1 | 20
+	// 0 | 0 | 1 | 5 | 17
+	// 0 | 0 | 0 | 0 | 2 | 4
+	// 0 | 0 | 0 | 0 | 4 | 2 | 0
+	// 0 | 2 //fire and ice
+	// 0 | 0 | 18	
+	// 0 | 0 | 2 | 17
+	// 0 | 0 | 0 | 14 | 12
+	// 0 | 0 | 0 | 0 | 4 | 5
+	// 0 | 0 | 0 | 0 | 0 | 3 | 0
+	// 0 | 5	// fjords
+	// 0 | 0 | 14
+	// 0 | 0 | 2 | 19
+	// 0 | 0 | 0 | 4 | 20
+	// 0 | 0 | 0 | 0 | 2 | 2
+	// 0 | 0 | 0 | 0 | 2 | 9 | 1
+	// 0 | 3	// loon lakes
+	// 0 | 0 | 13
+	// 0 | 0 | 2 | 28
+	// 0 | 0 | 0 | 4 | 14
+	// 0 | 0 | 0 | 0 | 4 | 9
+	// 0 | 0 | 0 | 0 | 0 | 0 | 0
+	// 0 | 5	// archipelago
+	// 0 | 0 | 19
+	// 0 | 0 | 0 | 14
+	// 0 | 0 | 0 | 7 | 15
+	// 0 | 0 | 0 | 1 | 4 | 2
+	// 0 | 0 | 0 | 0 | 3 | 6 | 1
+
  */
  
  
@@ -230,10 +259,10 @@
 			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
 			console.log("center dists:", centerdist);
 			for (let i = 0; i < colorclusters.length; i++) colorclusters[i].sort();
-			//colorclusters = colorclusters.sort((a, b) => 100*(a[0].value - b[0].value) + a[1].value - b[1].value);
 			console.log("color clusters:", colorclusters, toTable(colorclusters)); // 
 			extclusters[0] = [];
-			//console.log("ext col clusters:", extclusters, toTable(extclusters));
+			for (let i = 1; i < extclusters.length; i++) extclusters[i].sort();
+			console.log("ext clusters:", extclusters, toTable(extclusters)); //  
 			
 			// translating it back to the grid
 			writeCellsToGrid(grid);
@@ -246,37 +275,6 @@
 			
 			// ############# function storage below, totally professional
 
-			// neigh diversity 
-			// 0 | 3	// original
-			// 0 | 0 | 18
-			// 0 | 0 | 1 | 20
-			// 0 | 0 | 1 | 5 | 17
-			// 0 | 0 | 0 | 0 | 2 | 4
-			// 0 | 0 | 0 | 0 | 4 | 2 | 0
-			// 0 | 2 //fire and ice
-			// 0 | 0 | 18	
-			// 0 | 0 | 2 | 17
-			// 0 | 0 | 0 | 14 | 12
-			// 0 | 0 | 0 | 0 | 4 | 5
-			// 0 | 0 | 0 | 0 | 0 | 3 | 0
-			// 0 | 5	// fjords
-			// 0 | 0 | 14
-			// 0 | 0 | 2 | 19
-			// 0 | 0 | 0 | 4 | 20
-			// 0 | 0 | 0 | 0 | 2 | 2
-			// 0 | 0 | 0 | 0 | 2 | 9 | 1
-			// 0 | 3	// loon lakes
-			// 0 | 0 | 13
-			// 0 | 0 | 2 | 28
-			// 0 | 0 | 0 | 4 | 14
-			// 0 | 0 | 0 | 0 | 4 | 9
-			// 0 | 0 | 0 | 0 | 0 | 0 | 0
-			// 0 | 5	// archipelago
-			// 0 | 0 | 19
-			// 0 | 0 | 0 | 14
-			// 0 | 0 | 0 | 7 | 15
-			// 0 | 0 | 0 | 1 | 4 | 2
-			// 0 | 0 | 0 | 0 | 3 | 6 | 1
 
 			function colorenergy() {
 				precalc();
@@ -285,7 +283,7 @@
 				calccolorclusters();
 				calcship1fails();
 				// calccolorborderfail();
-				// calcextclusters();
+				calcextclusters();
 
 				let sum = 0;
 				
@@ -329,14 +327,18 @@
 						if (cc[0] >= 2 && cc[1] >= 2) twotwoplus++; 
 					}
 					sum += 2. * Math.max(twotwoplus - 2, 1 - twotwoplus, 0);
-				}				
-				
-				
-				
-				
-				// sum += 3 * clusteropfail + clustergoodfail + 0.015 * clusterdecentfail;	// penalizes large clusters of color+(colors that are adjacent in color-circle)
-//				sum += 2 * ship1fails; // this penalizes ship1 same color neighbors  (honestly this doesnt look super good since it doesnt seem to penalize if the distribution among the colors is bad, it just reduces total ship1 adjacencies)
-				// sum += 1.5 * extclusterfail; // penalizes clusters but clusters with ship1
+				}		
+				// specific extended cluster optimizatino for merqueens
+				for (let i = 2; i <= 2; i++) {
+					let twotwoplus = 0;
+					for (let j = 0; j < colorclusters[i].length; j++) {
+						let cc = colorclusters[i][j];
+						if (cc[0] >= 2 && cc[1] >= 2) twotwoplus++; 
+					}
+					sum += 2. * Math.max(twotwoplus - 4, 3 - twotwoplus, 0);
+				}		
+
+							
 				
 				return sum;
 			}
@@ -526,28 +528,28 @@
 			function calccolorclusters() {
 				colorclusters = [];
 				
-				clusteropfail = 0;
-				clustergoodfail = 0;
-				clusterdecentfail = 0;
-				let clustergoodaverage = 0, clusterdecentaverage = 0;
+				//clusteropfail = 0;
+				//clustergoodfail = 0;
+				// clusterdecentfail = 0;
+				// let clustergoodaverage = 0, clusterdecentaverage = 0;
 				colorclusters[0] = [];
 				for (let c0 = 1; c0 < 8; c0++) {
 					colorclusters[c0] = [];
 					
-					opclusters[c0] = 0;
-					goodclusters[c0] = 0;
-					decentclusters[c0] = 0;
+					// opclusters[c0] = 0;
+					// goodclusters[c0] = 0;
+					// decentclusters[c0] = 0;
 					let c1 = (c0 == 1 ? 7 : c0 - 1);
 					let c2 = (c0 == 7 ? 1 : c0 + 1);
 					findcolorclusters(c0,c1,c2);
-					clusteropfail += opclusters[c0] * 6;
-					clustergoodaverage += goodclusters[c0];
-					clusterdecentaverage += decentclusters[c0];
+					// clusteropfail += opclusters[c0] * 6;
+					// clustergoodaverage += goodclusters[c0];
+					// clusterdecentaverage += decentclusters[c0];
 				}
-				for (let c0 = 1; c0 < 8; c0++) {
-					clustergoodfail += (clustergoodaverage/7. - goodclusters[c0])**2;
-					clusterdecentfail += Math.abs(clusterdecentaverage/7. - decentclusters[c0])**2;
-				}
+				// for (let c0 = 1; c0 < 8; c0++) {
+					// clustergoodfail += (clustergoodaverage/7. - goodclusters[c0])**2;
+					// clusterdecentfail += Math.abs(clusterdecentaverage/7. - decentclusters[c0])**2;
+				// }
 			}
 			function findcolorclusters(c0,c1,c2) { //c0 is the main color and c1, c2 are its neighbours.
 				colorclusters[c0] = [];
@@ -585,61 +587,25 @@
 					s = reccolorcluster(adjsx[y][x][i],adjsy[y][x][i],c0,c1,c2,s);
 				}
 				return s;
-			}		
-
-			// function findcolorclusters(c0,c1,c2) { //c0 is the main color and c1, c2 are its neighbours
-				// for (let j = 0; j < grid.height; j++) {
-					// for (let i = 0; i < grid.rowWidth(j); i++) {
-						// clusterscan[j][i] = 0;
-					// }
-				// }
-				// for (let k = 0; k < landcellsx.length; k++) {
-					// let y = landcellsy[k], x = landcellsx[k];
-					// if (clusterscan[y][x] == 1) continue;
-					// let s = reccolorcluster(x,y,c0,c1,c2,0);
-					
-					// if (s > 0) {						
-						// if (!colorclusters[c0][s]) colorclusters[c0][s] = 1;
-						// else colorclusters[c0][s]++;
-					// }
-					
-					// if (s > 5) opclusters[c0]++;
-					// else if (s > 4) goodclusters[c0]++;
-					// if (s > 3) decentclusters[c0]++;		
-				// }
-			// }
-			// function reccolorcluster(x,y,c0,c1,c2,score) {
-				// if (g.outOfBounds(x,y)) return score; // this cell aint existin
-				// if (clusterscan[y][x] == 1) return score; // already scanned
-				// clusterscan[y][x] = 1; // scanned this
-				// let s = score;
-				// let c = cells[y][x];
-				// if (c == c0) s += 2;
-				// else if (c == c1) s += 1;
-				// else if (c == c2) s += 1;
-				// else return s; // not of the right color
-				// for (let i = 0; i < adjsx[y][x].length; i++) {
-					// s = reccolorcluster(adjsx[y][x][i],adjsy[y][x][i],c0,c1,c2,s);
-				// }
-				// return s;
-			// }			
+			}				
 			
 
 			// extended clusters are like colorclusters but incoorporate ship1
 			function calcextclusters() {
-				extclusterfail = 0;
+				extclusters = [];
+				// extclusterfail = 0;
 				for (let c0 = 1; c0 < 8; c0++) {
 					extclusters[c0] = [];
 					let c1 = (c0 == 1 ? 7 : c0 - 1);
 					let c2 = (c0 == 7 ? 1 : c0 + 1);
 					findextclusters(c0,c1,c2);
 				}
-				for (let c = 1; c < 8; c++) {
-					for (let kk in extclusters[c]) {
-						//if (kk >= 10) extclusterfail += 2+5*extclusters[c][kk];
-						extclusterfail += .5* Math.max(0, kk - 7) ** 2 * extclusters[c][kk];
-					}
-				}
+				// for (let c = 1; c < 8; c++) {
+					// for (let kk in extclusters[c]) {
+						// //if (kk >= 10) extclusterfail += 2+5*extclusters[c][kk];
+						// extclusterfail += .5* Math.max(0, kk - 7) ** 2 * extclusters[c][kk];
+					// }
+				// }
 			}
 			function findextclusters(c0,c1,c2) { //c0 is the main color and c1, c2 are its neighbours
 				for (let j = 0; j < grid.height; j++) {
@@ -650,10 +616,13 @@
 				for (let k = 0; k < landcellsx.length; k++) {
 					let y = landcellsy[k], x = landcellsx[k];
 					if (clusterscan[y][x] == 1) continue;
-					let s = recextcluster(x,y,c0,c1,c2,0);
-					if (s == 0) continue;
-					if (!extclusters[c0][s]) extclusters[c0][s] = 1;
-					else extclusters[c0][s]++;
+					if (cells[y][x] != c0) continue;
+					let s = recextcluster(x,y,c0,c1,c2,[0,0]);
+					extclusters[c0].push(s);
+					
+					// if (s == 0) continue;
+					// if (!extclusters[c0][s]) extclusters[c0][s] = 1;
+					// else extclusters[c0][s]++;
 					// if (s > 5) opclusters[c0]++;
 					// else if (s > 4) goodclusters[c0]++;
 					// if (s > 3) decentclusters[c0]++;		
@@ -665,9 +634,9 @@
 				clusterscan[y][x] = 1; // scanned this
 				let s = score;
 				let c = cells[y][x];
-				if (c == c0) s += 2;
-				else if (c == c1) s += 1;
-				else if (c == c2) s += 1;
+				if (c == c0) s[0] += 1;
+				else if (c == c1) s[1] += 1;
+				else if (c == c2) s[1] += 1;
 				else return s; // not of the right color
 				// for (let i = 0; i < adjship1x[y][x].length; i++) {
 					// s = recextcluster(adjship1x[y][x][i],adjship1y[y][x][i],c0,c1,c2,s);
