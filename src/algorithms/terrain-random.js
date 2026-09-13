@@ -263,6 +263,8 @@
 			extclusters[0] = [];
 			for (let i = 1; i < extclusters.length; i++) extclusters[i].sort();
 			console.log("ext clusters:", extclusters, toTable(extclusters)); //  
+			console.log("adjextx", adjextx);
+			console.log("adjexty", adjexty);
 			
 			// translating it back to the grid
 			writeCellsToGrid(grid);
@@ -632,7 +634,7 @@
 				if (g.outOfBounds(x,y)) return score; // this cell aint existin
 				if (clusterscan[y][x] == 1) return score; // already scanned
 				clusterscan[y][x] = 1; // scanned this
-				let s = score;
+				let s = score.slice();
 				let c = cells[y][x];
 				if (c == c0) s[0] += 1;
 				else if (c == c1) s[1] += 1;
@@ -641,9 +643,9 @@
 				// for (let i = 0; i < adjship1x[y][x].length; i++) {
 					// s = recextcluster(adjship1x[y][x][i],adjship1y[y][x][i],c0,c1,c2,s);
 				for (let i = 0; i < adjextx[y][x].length; i++) {
-					s = recextcluster(adjextx[y][x][i],adjexty[y][x][i],c0,c1,c2,s);
+					s = recextcluster(adjextx[y][x][i], adjexty[y][x][i],c0,c1,c2,s);
 				}
-				return s;
+				return s.slice();
 			}
 
 
