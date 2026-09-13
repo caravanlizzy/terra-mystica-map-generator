@@ -105,12 +105,15 @@
         const value = state.grid.get(x, y);
         const isWater = value === WATER;
         const hasColor = state.showColors && value !== WATER && value !== UNASSIGNED;
+        const isDark = hasColor && (value === 1 || value === 2 || value === 5 || value === 7);
         return {
             fill: hasColor ? displayColor(value) : '#ffffff',
             stroke: '#222',
             strokeWidth: 2,
             isWater,
-            marker: isSingleWater(x, y) ? 'water' : null
+            marker: isSingleWater(x, y) ? 'water' : null,
+            label: `(${x},${y})`,
+            labelColor: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.35)'
         };
     }
 
