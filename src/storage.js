@@ -51,7 +51,8 @@
             waterAlgorithmInputs: savedInputGroups(saved.waterAlgorithmInputs),
             continueTerrain: saved.continueTerrain === true,
             continueWater: saved.continueWater === true,
-            liveGenerationUpdates: saved.liveGenerationUpdates !== false
+            liveGenerationUpdates: saved.liveGenerationUpdates !== false,
+            showCoordinates: saved.showCoordinates === true
         };
     }
 

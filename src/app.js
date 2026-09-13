@@ -18,6 +18,7 @@
         grid: new TM.MapGrid({ width: 13, height: 9, form: 0 }),
         paintValue: null,    // terrain value picked on the wheel to paint hexes with
         showColors: true,    // when off, terrain colors are hidden so only water is shown
+        showCoordinates: false, // when off, (x,y) coordinates on hexes are hidden
         algorithmId: null,   // the terrain algorithm chosen in the header
         waterAlgorithmId: null, // the water algorithm chosen in the map editor
         algorithmInputs: {}, // { algorithmId: { inputKey: value } }
@@ -58,6 +59,17 @@
             '</svg>';
     }
 
+    // Coordinates icon for the zoom-window coordinates toggle.
+    function coordinatesIconSvg(active) {
+        const stroke = active ? '#2557c7' : '#888';
+        const fill = active ? '#3a6ff2' : '#f0f0f0';
+        const textColor = active ? '#ffffff' : '#777';
+        return '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+            '<rect x="2.5" y="3.5" width="19" height="17" rx="3.5" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.2"/>' +
+            '<text x="12" y="15.5" font-size="7.5" font-weight="bold" font-family="system-ui, -apple-system, sans-serif" text-anchor="middle" fill="' + textColor + '">(x,y)</text>' +
+            '</svg>';
+    }
+
     function restoreUiPreferences() {
         const saved = TM.storage.loadUiPreferences();
         if (!saved) return;
@@ -73,6 +85,7 @@
         $('continueTerrain').checked = saved.continueTerrain;
         $('continueWater').checked = saved.continueWater;
         $('liveGenerationUpdates').checked = saved.liveGenerationUpdates;
+        if (typeof saved.showCoordinates === 'boolean') state.showCoordinates = saved.showCoordinates;
     }
 
     function saveUiPreferences() {
@@ -86,7 +99,8 @@
             waterAlgorithmInputs: state.waterAlgorithmInputs,
             continueTerrain: $('continueTerrain').checked,
             continueWater: $('continueWater').checked,
-            liveGenerationUpdates: $('liveGenerationUpdates').checked
+            liveGenerationUpdates: $('liveGenerationUpdates').checked,
+            showCoordinates: state.showCoordinates
         });
     }
 
@@ -112,7 +126,7 @@
             strokeWidth: 2,
             isWater,
             marker: isSingleWater(x, y) ? 'water' : null,
-            label: `(${x},${y})`,
+            label: state.showCoordinates ? `(${x},${y})` : null,
             labelColor: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.35)'
         };
     }
@@ -233,6 +247,7 @@
         $('exportSnellman').disabled = !terrainGenerated;
 
         $('toggleColors').innerHTML = cubeIconSvg(state.showColors);
+        $('toggleCoordinates').innerHTML = coordinatesIconSvg(state.showCoordinates);
 
         // Mirror the current wheel selection in the zoom box so the active edit
         // color (or the water icon) is always visible next to the map.
@@ -486,6 +501,13 @@
         renderCurrent();
     }
 
+    // The zoom-window icon toggles coordinate labels on/off.
+    function toggleCoordinatesFromIcon() {
+        state.showCoordinates = !state.showCoordinates;
+        renderCurrent();
+        saveUiPreferences();
+    }
+
     async function generateColors() {
         readDimensions();
         const grid = state.grid;
@@ -645,6 +667,7 @@
         $('generateColors').onclick = generateColors;
         $('resetTerrain').onclick = resetTerrain;
         $('toggleColors').onclick = toggleColorsFromIcon;
+        $('toggleCoordinates').onclick = toggleCoordinatesFromIcon;
 
         $('preset').onchange = (event) => {
             const layout = TM.layout.getPreset(event.target.value);
