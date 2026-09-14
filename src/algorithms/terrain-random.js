@@ -121,6 +121,8 @@
 			let adjexty = [];
 			let adjextcols = []; // 
 			let adj2x = [], adj2y = []; // for land hex a list of all land hexes that are exactly 2 steps away (interesting for fakirs and dwarfs)
+	
+			let step2pairs = [];		// for each color the number of step2 (flight distance) pairs
 
 			let centersx = [0,0,0,0,0,0,0,0]; // stores the center of mass of every color
 			let centersy = [0,0,0,0,0,0,0,0];
@@ -274,6 +276,7 @@
 			console.log("######### land algo report ##########");
 			console.log("cur energy/color energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
 			console.log("color counts, #adj, #neigh, #ext neigh, #X|X+1|X, #X|X+3|X", colcounts, adjfails, neighfails, neighextfails, triplefails, marcfails);
+			console.log("step2 pairs gray and yellow:", step2pairs[4], step2pairs[6]);
 			//console.log("neigh diversities\n", toTable(neighdivs));
 			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
 			console.log("center dists:", centerdist);
@@ -303,6 +306,7 @@
 				calcship1fails();
 				// calccolorborderfail();
 				calcextclusters();
+				calc2steps();
 
 				let sum = 0;
 				
@@ -347,6 +351,11 @@
 					}
 					sum += 2. * Math.max(twotwoplus - 2, 1 - twotwoplus, 0);
 				}		
+
+				sum += 1. * Math.max(step2pairs[4] - 12 * sizefactor, 8 * sizefactor - step2pairs[4], 0);		// dwarfs 2steppairs
+				sum += 1. * Math.max(step2pairs[6] - 8 * sizefactor, 4 * sizefactor - step2pairs[6], 0);		// fakirs 2steppairs
+
+
 				// specific extended cluster optimizatino for merqueens
 				// for (let i = 2; i <= 2; i++) {
 					// let twotwoplus = 0;
@@ -427,6 +436,23 @@
 					centersx[k] = centersx[k] / colcounts[k]; 
 					centersy[k] = centersy[k] / colcounts[k]; 
 				}	
+			}
+
+			function calc2steps() {
+				step2pairs[4] = 0;
+				step2pairs[6] = 0;
+				for (let i = 0; i < landcellsx.length; i++) {
+					let x = landcellsx[i], y = landcellsy[i];
+					let c = cells[y][x];		
+					if (c == 0) continue;
+					if (c == 4 || c == 6) {
+						let adx = adj2x[y][x], ady = adj2y[y][x];
+						for (let j = 0; j < adx.length; j++) {
+							if (cells[ady[j]][adx[j]] != c) continue;
+							step2pairs[c]++;
+						}
+					}
+				}					
 			}
 
 			function calcship1fails() {
