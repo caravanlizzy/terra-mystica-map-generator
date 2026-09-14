@@ -276,7 +276,7 @@
 					}
 					if (nchanges >= 4) {
 						separationfails++;
-						console.log("sep fail at", x,y);
+						// console.log("sep fail at", x,y);
 					}
                 }
             }			

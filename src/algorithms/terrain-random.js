@@ -120,6 +120,7 @@
 			let adjextx = []; // extended is the union of land and ship1 neighbour hood 
 			let adjexty = [];
 			let adjextcols = []; // 
+			let adj2x = [], adj2y = []; // for land hex a list of all land hexes that are exactly 2 steps away (interesting for fakirs and dwarfs)
 
 			let centersx = [0,0,0,0,0,0,0,0]; // stores the center of mass of every color
 			let centersy = [0,0,0,0,0,0,0,0];
@@ -192,18 +193,36 @@
 			// calculate the neighbour geometry
 			for (let y = 0; y < g.height; y++) {
 				adjsx.push([]); adjsy.push([]);
+				adj2x.push([]); adj2y.push([]);
 				for (let x = 0; x < g.rowWidth(y); x++) {				
 					adjsx[y].push([]); adjsy[y].push([]);
+					adj2x[y].push([]); adj2y[y].push([]);
 					let nland = 0; // count land neighbors
 					for (let i = 0; i < 6; i++) {
 						let ncoord = g.neighbor(x,y,i);
 						let nx = ncoord[0], ny = ncoord[1];
 						if (g.outOfBounds(nx,ny)) continue;					
-						adjsx[y][x].push(nx);
-						adjsy[y][x].push(ny);
-						if (cells[ny][nx] != 0) nland++;
+						adjsx[y][x].push(nx); adjsy[y][x].push(ny);
+						if (cells[ny][nx] != 0) nland++;						
 					}
 					if (cells[y][x] != 0) landdegrees[nland]++;
+					
+					// now 2steps away:
+					for (let i = 0; i < 6; i++) {
+						let ncoord = g.neighbor(x,y,i);
+						let nx = ncoord[0], ny = ncoord[1];
+						let ncoord1 = g.neighbor(nx,ny,i);
+						let nx1 = ncoord1[0], ny1 = ncoord1[1];
+						let ncoord2 = g.neighbor(nx,ny,(i+1) % 6);
+						let nx2 = ncoord2[0], ny2 = ncoord2[1];
+						if (!g.outOfBounds(nx1,ny1) && cells[ny1][nx1] != 0) {
+							adj2x[y][x].push(nx1); adj2y[y][x].push(ny1);
+						}
+						if (!g.outOfBounds(nx2,ny2) && cells[ny2][nx2] != 0) {
+							adj2x[y][x].push(nx2); adj2y[y][x].push(ny2);
+						}						
+					}
+					
 				}
 			}
 			// some border distri calculations
