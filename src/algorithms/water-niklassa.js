@@ -34,6 +34,7 @@
         let wateradjborders = 0;  // I think this counts water hex at the border that are adjacent to other water hex at the border (and water hex in the corner)
         let wateradjs = [0, 0, 0, 0, 0, 0, 0]; // lists number of water hex that have this number of water neighbors
         let landadjs = [0, 0, 0, 0, 0, 0, 0]; // lists number of land hex that have this number of land neighbors
+		let separationfails = 0;  // counts the number of hex of degree 2 that separate the water in the neighborhood
 
         let colcounts = [];		// counts the total number of hexes of each color
         let g = null; 	// the grid from the UI that we currently need to calculate grid.rowWidth()
@@ -113,6 +114,7 @@
             console.log("land degrees", landadjs, landadjs.reduce((a, b) => a + b, 0));
             console.log("water degrees", wateradjs, wateradjs.reduce((a, b) => a + b, 0));
             console.log("water borders", waterborders);
+            console.log("separatos", separationfails);
             console.log("water clusters", waterclustern, nwatercluster);
             console.log("land clusters", landclustern, nlandcluster);
 
@@ -155,6 +157,7 @@
             precalc();
             calcwaterfails();
             calcwaterclusters();
+			calcsepfails();
 
             let sum = 0.;
             let sf = sizefactor;
@@ -177,6 +180,10 @@
             sum += 1. * Math.max(landadjs[4] - 25 * sf, 19 * sf - landadjs[4], 0);	// penalty for coast
             sum += 1. * Math.max(landadjs[5] - 10 * sf, 5 * sf - landadjs[5], 0);	// penalty for bays
             sum += 1. * Math.max(landadjs[6] - 9 * sf, 3 * sf - landadjs[6], 0);	// penalty for inland
+
+           // sum += 1. * Math.max(landadjs[6] - 9 * sf, 3 * sf - landadjs[6], 0);	// penalty for inland
+
+            sum += 2. * Math.max(separationfails - 0 * sf, 0);	// penalty for separating landdegree=2 hexes
 
             for (let i = 0; i < landclustern.length; i++) {
                 if (!landclustern[i]) continue;
@@ -248,6 +255,32 @@
             // centersy[k] = (centersy[k] / colcounts[k]) - 4;
             // }
         }
+		
+		function calcsepfails() {
+			separationfails = 0;
+            for (let y = 0; y < g.height; y++) {
+                for (let x = 0; x < g.rowWidth(y); x++) {
+                    let c = cells[y][x];
+					if (c == 0) continue;
+					let adx = adjsx[y][x], ady = adjsy[y][x];
+					if (adx.length < 6) continue; // on the border its not a problem
+					if (adjcols[y][x][0] != 4) continue; 
+					
+					let arewater = (cells[ady[0]][adx[0]] == 0);
+					let nchanges = 0;
+					for (let i = 0; i < adx.length; i++) {
+						let nextwater = (cells[ady[(i+1) % adx.length]][adx[(i+1) % adx.length]] == 0);
+						if (arewater == nextwater) continue;
+						nchanges++;
+						arewater = nextwater;
+					}
+					if (nchanges >= 4) {
+						separationfails++;
+						console.log("sep fail at", x,y);
+					}
+                }
+            }			
+		}
 
         function calcwaterfails() {
             landadjs = [0, 0, 0, 0, 0, 0, 0];
