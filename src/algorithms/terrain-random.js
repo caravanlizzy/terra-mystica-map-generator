@@ -129,6 +129,8 @@
 			let optcenter = g.centerOfMass(); // [x,y] array storing optimal center of mass
 			let centerdist = [0,0,0,0,0,0,0,0]; // stores the distance of each colors center of mass to the center of the map
 			let centersfail = 0;
+			let avdist = [0,0,0,0,0,0,0,0]; // stores the average distance to center
+			let optdist = 0; // land average distance
 
 			let ncolorborder = [0,0,0,0,0,0,0,0]; // how many of that color are at the border
 			let totalborder = g.nBorderHexes(); // need to know
@@ -276,10 +278,10 @@
 			console.log("######### land algo report ##########");
 			console.log("cur energy/color energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
 			console.log("color counts, #adj, #neigh, #ext neigh, #X|X+1|X, #X|X+3|X", colcounts, adjfails, neighfails, neighextfails, triplefails, marcfails);
-			console.log("step2 pairs gray and yellow:", step2pairs[4], step2pairs[6]);
+			console.log("step2 pairs gray and yellow:", step2pairs[4]/2, step2pairs[6]/2);
 			//console.log("neigh diversities\n", toTable(neighdivs));
 			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
-			console.log("center dists:", centerdist);
+			console.log("center and avg dists:", centerdist, avdist, optdist);
 			for (let i = 0; i < colorclusters.length; i++) colorclusters[i].sort();
 			console.log("color clusters:", colorclusters, toTable(colorclusters)); // 
 			extclusters[0] = [];
@@ -339,6 +341,7 @@
 				//sum += centersfail; // penalize centers of mass being off
 				for (let i = 1; i < 8; i++) {
 					sum += 2.*Math.max((Math.round(4. * centerdist[i]) - 1.5)*0.25, 0);
+					sum += 1.*Math.max(Math.round(10* (Math.abs(avdist[i] - optdist) - 0.2) )/5, 0);
 				}				
 				
 				
@@ -352,8 +355,8 @@
 					sum += 2. * Math.max(twotwoplus - 2, 1 - twotwoplus, 0);
 				}		
 
-				sum += 1. * Math.max(step2pairs[4] - 12 * sizefactor, 8 * sizefactor - step2pairs[4], 0);		// dwarfs 2steppairs
-				sum += 1. * Math.max(step2pairs[6] - 8 * sizefactor, 4 * sizefactor - step2pairs[6], 0);		// fakirs 2steppairs
+				sum += 0.5 * Math.max(step2pairs[4] - 12 * sizefactor, 8 * sizefactor - step2pairs[4], 0);		// dwarfs 2steppairs
+				sum += 0.5 * Math.max(step2pairs[6] - 8 * sizefactor, 4 * sizefactor - step2pairs[6], 0);		// fakirs 2steppairs
 
 
 				// specific extended cluster optimizatino for merqueens
@@ -382,6 +385,7 @@
 				for (let k = 0; k < 8; k++) {
 					centersx[k] = 0;
 					centersy[k] = 0;
+					avdist[k] = 0;
 				}
 				colcounts = [0,0,0,0,0,0,0,0]; 	// total number of colors
 				ncolorborder = [0,0,0,0,0,0,0,0]; // colors on the border;
@@ -429,12 +433,14 @@
 						
 						// centers
 						centersx[c] += x;
-						centersy[c] += y;			
+						centersy[c] += y;
+						avdist[c] += Math.sqrt((x-optcenter[0])**2 + (y-optcenter[1])**2); // this is not a completely accurate formula but for our purposes probably suffices
 					 }
 				}
 				for (let k = 0; k < 8; k++) {
-					centersx[k] = centersx[k] / colcounts[k]; 
-					centersy[k] = centersy[k] / colcounts[k]; 
+					centersx[k] = Math.round(centersx[k] / colcounts[k] * 100) / 100; 
+					centersy[k] = Math.round(centersy[k] / colcounts[k] * 100) / 100; 
+					avdist[k] = Math.round(avdist[k] / colcounts[k] * 100) / 100; 
 				}	
 			}
 
@@ -782,12 +788,16 @@
 			
 			function findland() { // generates the landcellsx,y array for faster randomizing of colors
 				landcellsx = []; landcellsy = [];
+				optdist = 0;
 				for (let y = 0; y < g.height; y++) {
 					for (let x = 0; x < g.rowWidth(y); x++) {	
-						if (cells[y][x] == 0) continue;
+						let c = cells[y][x];
+						if (c == 0) continue;
 						landcellsx.push(x); landcellsy.push(y);
+						optdist += Math.sqrt((x-optcenter[0])**2 + (y-optcenter[1])**2);
 					}
 				}
+				optdist = optdist / landcellsx.length;
 			}			
 			
 			// I think this somehow counts ship1 adjacency but I havent checked
