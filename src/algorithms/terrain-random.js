@@ -132,6 +132,9 @@
 			let avdist = [0,0,0,0,0,0,0,0]; // stores the average distance to center
 			let optdist = 0; // land average distance
 
+			let corex = []; // the  coordinates of the land hex that we consider to be in the core of the map
+			let corey = []; 
+			
 			let ncolorborder = [0,0,0,0,0,0,0,0]; // how many of that color are at the border
 			let totalborder = g.nBorderHexes(); // need to know
 			let bordercolmin = 0, bordercolmax = 0; // minimum and maximum number of border hexes per color
@@ -229,11 +232,63 @@
 					
 				}
 			}
+			
 			// some border distri calculations
 			bordercolmin = Math.floor(totalborder / 7.); 
 			bordercolmax = Math.ceil(totalborder / 7.);
 			
-			
+			// find the core
+			let corescan = [];
+			for (let y = 0; y < g.height; y++) {
+				corescan.push([]);
+				for (let x = 0; x < g.rowWidth(y); x++) {
+					corescan[y][x] = 0;
+				}
+			}
+			let supercorex = [], supercorey = [];
+			if (g.height % 2 == 1) { 	// there is a center row
+				let cy = Math.floor(g.height/2);
+				if (g.rowWidth(cy) % 2 == 1) {	// there is a center hex
+					let cx = Math.floor(g.rowWidth(cy)/2);
+					supercorex.push(cx); supercorey.push(cy);					
+				} else {	// there are two center hex
+					let cx1 = Math.floor(g.rowWidth(cy)/2);
+					let cx2 = cx1 - 1;
+					supercorex.push(cx1); supercorey.push(cy);					
+					supercorex.push(cx2); supercorey.push(cy);					
+				}
+			} else {	// no center row
+				let cy1 = Math.floor(g.height / 2);
+				let cy2 = cy1 - 1;
+				if (g.rowWidth(cy1) % 2 == 1) {  // the row with an single hex
+					let cx = Math.floor(g.rowWidth(cy1)/2);
+					supercorex.push(cx); supercorey.push(cy1);					
+					let cx1 = Math.floor(g.rowWidth(cy2)/2);
+					let cx2 = cx1 - 1;
+					supercorex.push(cx1); supercorey.push(cy2);					
+					supercorex.push(cx2); supercorey.push(cy2);					
+				} else {
+					let cx = Math.floor(g.rowWidth(cy2)/2);
+					supercorex.push(cx); supercorey.push(cy2);					
+					let cx1 = Math.floor(g.rowWidth(cy1)/2);
+					let cx2 = cx1 - 1;
+					supercorex.push(cx1); supercorey.push(cy1);					
+					supercorex.push(cx2); supercorey.push(cy1);					
+				}
+			}
+			for (let i = 0; i < supercorex.length; i++) {
+				let cx = supercorex[i], cy = supercorey[i];
+				if (cells[cy][cx] != 0 && corescan[cy][cx] == 0) { 
+					corex.push(cx); corey.push(cy);
+					corescan[cy][cx] = 1;
+				}
+				let ax = adj2x[cy][cx].concat(adjsx[cy][cx]), ay = adj2y[cy][cx].concat(adjsy[cy][cx]);
+				for (let i = 0; i < ax.length; i++) {
+					if (cells[ay[i]][ax[i]] == 0 || corescan[ay[i]][ax[i]] == 1) continue;
+					corex.push(ax[i]); corey.push(ay[i]);						
+					corescan[ay[i]][ax[i]] = 1;
+				}				
+			}			
 			
 			findland();
 			calcship1();
@@ -282,6 +337,7 @@
 			//console.log("neigh diversities\n", toTable(neighdivs));
 			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
 			console.log("center and avg dists:", centerdist, avdist, optdist);
+			console.log("core hexx:", corex,corey);
 			for (let i = 0; i < colorclusters.length; i++) colorclusters[i].sort();
 			console.log("color clusters:", colorclusters, toTable(colorclusters)); // 
 			extclusters[0] = [];
