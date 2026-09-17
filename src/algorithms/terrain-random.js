@@ -134,6 +134,8 @@
 
 			let corex = []; // the  coordinates of the land hex that we consider to be in the core of the map
 			let corey = []; 
+			let corecols = [0,0,0,0,0,0,0,0];	// color counts in the core
+			let corecolmin = 0, corecolmax = 0; // minimum and maximum number of core hexes per color
 			
 			let ncolorborder = [0,0,0,0,0,0,0,0]; // how many of that color are at the border
 			let totalborder = g.nBorderHexes(); // need to know
@@ -288,7 +290,9 @@
 					corex.push(ax[i]); corey.push(ay[i]);						
 					corescan[ay[i]][ax[i]] = 1;
 				}				
-			}			
+			}
+			corecolmin = Math.floor(corex.length / 7.); 
+			corecolmax = Math.ceil(corex.length / 7.);
 			
 			findland();
 			calcship1();
@@ -337,7 +341,8 @@
 			//console.log("neigh diversities\n", toTable(neighdivs));
 			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
 			console.log("center and avg dists:", centerdist, avdist, optdist);
-			console.log("core hexx:", corex,corey);
+			//console.log("core hexx:", corex,corey);
+			console.log("core color counts:", corecols, corecolmin + "/" + corecolmax);
 			for (let i = 0; i < colorclusters.length; i++) colorclusters[i].sort();
 			console.log("color clusters:", colorclusters, toTable(colorclusters)); // 
 			extclusters[0] = [];
@@ -365,6 +370,7 @@
 				// calccolorborderfail();
 				calcextclusters();
 				calc2steps();
+				calccore();
 
 				let sum = 0;
 				
@@ -376,9 +382,16 @@
 				sum += 3. * adjfails; // penalizes same colors being adjacent
 				sum += 1. * triplefails; // penalizes X-(Xpm1)-X
 
+				// border optimization
 				for (let i = 1; i < 8; i++) {
 					sum += 2. * Math.max(ncolorborder[i] - bordercolmax, bordercolmin - ncolorborder[i],0);
 				}
+
+				// core optimization
+				for (let i = 1; i < 8; i++) {
+					sum += 1. * Math.max(corecols[i] - corecolmax, corecolmin - corecols[i],0);
+				}
+
 				
 				// neighbourhood hard diversity fails:
 				sum += 3.* neighdivs[3][2];
@@ -399,6 +412,7 @@
 					sum += 2.*Math.max((Math.round(4. * centerdist[i]) - 1.5)*0.25, 0);
 					sum += 1.*Math.max(Math.round(10* (Math.abs(avdist[i] - optdist) - 0.2) )/5, 0);
 				}				
+
 				
 				
 				// cluster optimization... at least one 2,2+ cluster for each color would be nice.
@@ -408,10 +422,10 @@
 						let cc = colorclusters[i][j];
 						if (cc[0] >= 2 && cc[1] >= 2) twotwoplus++; 
 					}
-					sum += 2. * Math.max(twotwoplus - 2, 1 - twotwoplus, 0);
+					sum += 2. * Math.max(twotwoplus - 2, 0 - twotwoplus, 0);
 				}		
 
-				sum += 0.5 * Math.max(step2pairs[4] - 12 * sizefactor, 8 * sizefactor - step2pairs[4], 0);		// dwarfs 2steppairs
+				sum += 0.5 * Math.max(step2pairs[4] - 10 * sizefactor, 6 * sizefactor - step2pairs[4], 0);		// dwarfs 2steppairs
 				sum += 0.5 * Math.max(step2pairs[6] - 8 * sizefactor, 4 * sizefactor - step2pairs[6], 0);		// fakirs 2steppairs
 
 
@@ -498,6 +512,15 @@
 					centersy[k] = Math.round(centersy[k] / colcounts[k] * 100) / 100; 
 					avdist[k] = Math.round(avdist[k] / colcounts[k] * 100) / 100; 
 				}	
+			}
+			
+			function calccore() {
+				corecols = [0,0,0,0,0,0,0,0];
+				for (let i = 0; i < corex.length; i++) {
+					let x = corex[i], y = corey[i];
+					let c = cells[y][x];
+					corecols[c]++;
+				}									
 			}
 
 			function calc2steps() {
