@@ -138,7 +138,8 @@
 			let corecolmin = 0, corecolmax = 0; // minimum and maximum number of core hexes per color
 			
 			let ncolorborder = [0,0,0,0,0,0,0,0]; // how many of that color are at the border
-			let totalborder = g.nBorderHexes(); // need to know
+			// let totalborder = g.nBorderHexes(); // need to know
+			let totallandborder = 0;
 			let bordercolmin = 0, bordercolmax = 0; // minimum and maximum number of border hexes per color
 			let colorborderfail = 0;
 
@@ -214,7 +215,10 @@
 						adjsx[y][x].push(nx); adjsy[y][x].push(ny);
 						if (cells[ny][nx] != 0) nland++;						
 					}
-					if (cells[y][x] != 0) landdegrees[nland]++;
+					if (cells[y][x] != 0) {
+						landdegrees[nland]++;
+						if (adjsx[y][x].length < 6) totallandborder++;
+					}
 					
 					// now 2steps away:
 					for (let i = 0; i < 6; i++) {
@@ -236,8 +240,8 @@
 			}
 			
 			// some border distri calculations
-			bordercolmin = Math.floor(totalborder / 7.); 
-			bordercolmax = Math.ceil(totalborder / 7.);
+			bordercolmin = Math.floor(totallandborder / 7.); 
+			bordercolmax = Math.ceil(totallandborder / 7.);
 			
 			// find the core
 			let corescan = [];
@@ -339,7 +343,7 @@
 			console.log("color counts, #adj, #neigh, #ext neigh, #X|X+1|X, #X|X+3|X", colcounts, adjfails, neighfails, neighextfails, triplefails, marcfails);
 			console.log("step2 pairs gray and yellow:", step2pairs[4]/2, step2pairs[6]/2);
 			//console.log("neigh diversities\n", toTable(neighdivs));
-			console.log("tot/min/max border + border colors", totalborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
+			console.log("tot/min/max border + border colors", totallandborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
 			console.log("center and avg dists:", centerdist, avdist, optdist);
 			//console.log("core hexx:", corex,corey);
 			console.log("core color counts:", corecols, corecolmin + "/" + corecolmax);
