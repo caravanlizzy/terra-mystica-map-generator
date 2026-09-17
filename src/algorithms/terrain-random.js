@@ -425,6 +425,26 @@
 					sum += 2. * Math.max(twotwoplus - 2, 0 - twotwoplus, 0);
 				}		
 
+				// ship1 cluster optimization... we want that each color has either: 1) less than 6 clusters or at least one cluster [4+,x], except for blue, where we want that there is no [4+,x] cluster.
+				for (let i = 1; i < 8; i++) {
+					if (i == 2) continue;
+					if (extclusters[i].length < 6) continue;
+					let problem = true;
+					for (let j = 0; j < extclusters[i].length; j++) {
+						let cc = extclusters[i][j];
+						if (cc[0] < 4) continue;
+						problem = false;
+						break;
+					}
+					if (problem) sum += 3;
+				}		
+				for (let j = 0; j < extclusters[2].length; j++) {
+					let cc = extclusters[2][j];
+					if (cc[0] > 3) sum += 2;
+				}
+
+
+
 				sum += 0.5 * Math.max(step2pairs[4] - 10 * sizefactor, 6 * sizefactor - step2pairs[4], 0);		// dwarfs 2steppairs
 				sum += 0.5 * Math.max(step2pairs[6] - 8 * sizefactor, 4 * sizefactor - step2pairs[6], 0);		// fakirs 2steppairs
 
