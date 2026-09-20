@@ -148,8 +148,8 @@
 			let adjfails = 0; // no two colors adjacent
 			let triplefails = 0; // number of patterns XAX with A = X+/-1
 			let marcfails = 0; // number of patterns XAX with A = X+/-3
-			let neighfails = 0; // counts the number of hex that have the same color three times as extended neighbor
-			let neighextfails = 0; // counts the number of hex that have the same color three times as neighbor with ship1, and hexes that have itself twice as an extended neighbour    // currently collides with neighfails
+			let neighfails = 0; // counts the number of hex that have the same color three times as neighbor
+			let neighextfails = 0; // counts the number of hex that have the same color three times as neighbor with ship1
 			let neighdivs = []; 	// 2d array... counts the occurrence for every hex degree of different adjcolors 
 			
 			
@@ -665,7 +665,6 @@
 				let sum = 0;
 
 				let ncol = adjcols[y][x];
-				let ncolext = adjextcols[y][x];
 				
 				if (ncol[c] > 0) adjfails += ncol[c];  // add how many neighbors with the same color
 				if (ncol[c == 1 ? 7 : c - 1] > 1) triplefails += 1;
@@ -679,7 +678,7 @@
 					if (ncol[i] == 0) continue;
 					ndif++;
 					nn += ncol[i];
-					if (ncolext[i] >= 3) neighfails++; // three times is too much
+					if (ncol[i] >= 3) neighfails++; // three times is too much
 				}
 				neighdivs[nn][ndif]++;
 				// if ((nn >= 5) && (ndif < 4)) neighfails++;  // too few different neighbor colors
