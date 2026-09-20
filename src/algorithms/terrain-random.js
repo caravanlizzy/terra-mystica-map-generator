@@ -109,6 +109,7 @@
 			let adjsx = []; // list of adjacent cells for each cell (that is excluding the border)
 			let adjsy = [];
 			let adjcols = []; // list per cell of number of each adjacent color
+			let nonearcols = 0;			// number of hexes without a near adjacent color (color +/-1)
 			let landcellsx = [];
 			let landcellsy = [];
 			let landdegrees = []; // number of land hex with given adjacency degree 0-6
@@ -340,7 +341,7 @@
 			
 			console.log("######### land algo report ##########");
 			console.log("cur energy/color energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
-			console.log("color counts, #adj, #neigh, #ext neigh, #X|X+1|X, #X|X+3|X", colcounts, adjfails, neighfails, neighextfails, triplefails, marcfails);
+			console.log("color counts, #adj, #neigh, #ext neigh, #X|X+1|X, #X|X+3|X, #no near col", colcounts, adjfails, neighfails, neighextfails, triplefails, marcfails, nonearcols);
 			console.log("step2 pairs gray and yellow:", step2pairs[4]/2, step2pairs[6]/2);
 			//console.log("neigh diversities\n", toTable(neighdivs));
 			console.log("tot/min/max border + border colors", totallandborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
@@ -410,7 +411,8 @@
 
 				sum	+= 4. * neighfails; // penalizes hexes that have one color three times as neighbor
 				sum	+= 2. * neighextfails; // penalizes hexes that have 2+ samecolor ext neighbors, and hexes that have 3+ ext neighbors of one adjacent color
-			
+				sum += 1. * Math.max(nonearcols - 18.*sizefactor, 10.*sizefactor - nonearcols, 0);  // controls hexes that have no next-color neighbour
+
 				//sum += centersfail; // penalize centers of mass being off
 				for (let i = 1; i < 8; i++) {
 					sum += 2.*Math.max((Math.round(4. * centerdist[i]) - 1.5)*0.25, 0);
@@ -486,6 +488,7 @@
 				adjcols = [];					// adjcolors per cells
 				adjship1cols = [];					// adjcolors per cells
 				adjextcols = [];					// adjcolors per cells
+				nonearcols = 0;					// number of cells that have no neighboring near color
 
 				for (let y = 0; y < g.height; y++) {
 					adjcols[y] = [];
@@ -504,6 +507,11 @@
 							ncol[cells[adjsy[y][x][i] ][adjsx[y][x][i] ]]++;
 						}
 						adjcols[y][x] = ncol.slice();
+						if (c != 0) {
+							let c1 = (c == 1 ? 7 : c - 1);
+							let c2 = (c == 7 ? 1 : c + 1);
+							if (ncol[c1] == 0 && ncol[c2] == 0) nonearcols++;							
+						}
 
 						// color ship1 adjacencies
 						if (c != 0) {
