@@ -320,39 +320,68 @@
 			}		
 
 
-			const toTable = arr => {
-				const w = arr[0].map((_, i) => Math.max(...arr.map(r => String(r[i]).length)));
-				return arr.map(r => r.map((v, i) => String(v).padEnd(w[i])).join(" | ")).join("\n");
+			const COLOR_NAMES = {
+				1: 'Black',
+				2: 'Blue',
+				3: 'Green',
+				4: 'Grey',
+				5: 'Red',
+				6: 'Yellow',
+				7: 'Brown'
 			};
-			
-			// function toTable (a) {
-				// let s = "";
-				// for (let i = 0; i < a.length; i++) {
-					// if (a[i] === undefined) continue;
-					// s += i + ":";
-					// for (let j = 0; j < a[i].length; j++) {
-						// let b = (a[i][j] === undefined ? " 0" : ( a[i][j] < 10 ? " " + a[i][j] : a[i][j] ));
-						// s += " " + b + " |";
-					// }
-					// s += "\n";
-				// }
-				// return s;
-			// };
-			
-			console.log("######### land algo report ##########");
-			console.log("cur energy/color energy", curenergy, colorenergy());	//its important to call colorenergy here so the rest of the numbers below are correct
-			console.log("color counts, #adj, #neigh, #ext neigh, #X|X+1|X, #X|X+3|X, #no near col", colcounts, adjfails, neighfails, neighextfails, triplefails, marcfails, nonearcols);
-			console.log("step2 pairs gray and yellow:", step2pairs[4]/2, step2pairs[6]/2);
-			//console.log("neigh diversities\n", toTable(neighdivs));
-			console.log("tot/min/max border + border colors", totallandborder + "/" + bordercolmin + "/" + bordercolmax, ncolorborder);
-			console.log("center and avg dists:", centerdist, avdist, optdist);
-			//console.log("core hexx:", corex,corey);
-			console.log("core color counts:", corecols, corecolmin + "/" + corecolmax);
-			for (let i = 0; i < colorclusters.length; i++) colorclusters[i].sort();
-			console.log("color clusters:", colorclusters, toTable(colorclusters)); // 
+
+			function formatClusters(clusters) {
+				if (!clusters || clusters.length === 0) {
+					return '-';
+				}
+
+				return clusters
+					.map(cluster => {
+						if (Array.isArray(cluster)) {
+							return `[${cluster.join(',')}]`;
+						}
+						return cluster;
+					})
+					.join(' ');
+			}
+
+			console.log("==================== LAND ALGORITHM REPORT ====================");
+			const finalColorEnergy = colorenergy();	// its important to call colorenergy here so the rest of the numbers below are correct
+			console.log("cur energy/color energy:", curenergy, finalColorEnergy);
+			console.log("tot/min/max border:", `${totallandborder} / ${bordercolmin} / ${bordercolmax}`);
+			console.log("core color min/max:", `${corecolmin} / ${corecolmax}`);
+			console.log("optimal average distance (optdist):", optdist);
+
+			console.log("\nViolations / Rule Penalties:");
+			console.table([
+				{ "Metric / Rule": "Adjacent same color (#adj)", "Count": adjfails },
+				{ "Metric / Rule": "Triple same color neighbor (#neigh)", "Count": neighfails },
+				{ "Metric / Rule": "Extended neighbor fails (#ext neigh)", "Count": neighextfails },
+				{ "Metric / Rule": "X-(X±1)-X triples (#X|X+1|X)", "Count": triplefails },
+				{ "Metric / Rule": "X-(X±3)-X triples (#X|X+3|X)", "Count": marcfails },
+				{ "Metric / Rule": "No near color (#no near col)", "Count": nonearcols }
+			]);
+
+			for (let i = 0; i < colorclusters.length; i++) if (colorclusters[i]) colorclusters[i].sort();
 			extclusters[0] = [];
-			for (let i = 1; i < extclusters.length; i++) extclusters[i].sort();
-			console.log("ext clusters:", extclusters, toTable(extclusters)); //  
+			for (let i = 1; i < extclusters.length; i++) if (extclusters[i]) extclusters[i].sort();
+
+			console.log("\nTerrain Colors Breakdown:");
+			const colorReport = [];
+			for (let c = 1; c <= 7; c++) {
+				colorReport.push({
+					"Color": COLOR_NAMES[c],
+					"Count": colcounts[c],
+					"Border": ncolorborder[c],
+					"Core": corecols[c],
+					"Center Dist": typeof centerdist[c] === 'number' ? Number(centerdist[c].toFixed(2)) : centerdist[c],
+					"Avg Dist": typeof avdist[c] === 'number' ? Number(avdist[c].toFixed(2)) : avdist[c],
+					"Step2 Pairs": (step2pairs[c] || 0) / 2,
+					"Color Clusters": formatClusters(colorclusters[c]),
+					"Ext Clusters": formatClusters(extclusters[c])
+				});
+			}
+			console.table(colorReport);
 			
 			// translating it back to the grid
 			writeCellsToGrid(grid);
